@@ -1,0 +1,11 @@
+import { NextResponse } from "next/server";
+
+export async function HEAD() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      "Date": new Date().toUTCString(),
+      "Cache-Control": "no-store",
+    },
+  });
+}
