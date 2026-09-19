@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/event_provider.dart';
-import '../control_room/control_room_screen.dart';
+import '../dashboard/stagepilot_dashboard_screen.dart';
 import '../anchor/anchor_teleprompter_screen.dart';
 import '../stage_display/stage_display_screen.dart';
 
@@ -159,16 +159,18 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               ),
               const SizedBox(height: 14),
 
-              // Role 1: Organizer Control Room
+              // Role 1: StagePilot AI Dashboard
               _buildRoleCard(
-                icon: Icons.tune_rounded,
-                title: 'Organizer Control Room',
-                subtitle: 'Manage live agenda, trigger delays & orchestrate stage flow',
-                badgeText: 'CONTROL',
-                badgeColor: AppTheme.cyan,
-                onTap: () => _navigateTo(const ControlRoomScreen()),
+                icon: Icons.dashboard_rounded,
+                title: 'StagePilot AI Suite',
+                subtitle: 'Event Dashboard, Agenda, Speakers, AI Assistant & Settings',
+                badgeText: 'FULL DASHBOARD',
+                badgeColor: AppTheme.primaryPurple,
+                onTap: () => _navigateTo(const StagePilotDashboardScreen()),
               ),
               const SizedBox(height: 14),
+
+              // Role 2: Organizer Control Room
 
               // Role 2: Anchor Teleprompter
               _buildRoleCard(

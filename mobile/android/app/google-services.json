@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "493975270434",
+    "project_id": "smarteve-ae736",
+    "storage_bucket": "smarteve-ae736.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:493975270434:android:633b8f85a0d89c0291c67b",
+        "android_client_info": {
+          "package_name": "com.example.smarteve_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3iNwpiqoA40Vbl9caQjtxQVLCCxerSTY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
