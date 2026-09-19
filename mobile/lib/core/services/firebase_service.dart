@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class FirebaseService {
   static final FirebaseService _instance = FirebaseService._internal();
@@ -11,6 +13,7 @@ class FirebaseService {
 
   bool _isInitialized = false;
   String? _fcmToken;
+  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
   bool get isInitialized => _isInitialized;
   String? get fcmToken => _fcmToken;
@@ -28,6 +31,7 @@ class FirebaseService {
 
       await _setupAuth();
       await _setupFcm();
+      await _setupLocalNotifications();
     } catch (e) {
       debugPrint("ℹ️ Firebase initialization skipped or mock mode: $e");
     }
@@ -44,6 +48,33 @@ class FirebaseService {
     } catch (e) {
       debugPrint("Firebase Auth error: $e");
     }
+  }
+
+  Future<void> _setupLocalNotifications() async {
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosSettings = DarwinInitializationSettings();
+    const initSettings = InitializationSettings(android: androidSettings, iOS: iosSettings);
+    
+    await _localNotifications.initialize(initSettings);
+  }
+
+  Future<void> showTestNotification() async {
+    const androidDetails = AndroidNotificationDetails(
+      'test_channel_id',
+      'Test Notifications',
+      channelDescription: 'Channel for testing notifications',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    const iosDetails = DarwinNotificationDetails();
+    const platformDetails = NotificationDetails(android: androidDetails, iOS: iosDetails);
+    
+    await _localNotifications.show(
+      Random().nextInt(100000),
+      'SmartEve Test Notification',
+      'This is a test message triggered by your button!',
+      platformDetails,
+    );
   }
 
   Future<void> _setupFcm() async {

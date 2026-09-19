@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'dart:async';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/event_provider.dart';
+import '../../core/services/firebase_service.dart';
 import '../control_room/control_room_screen.dart';
 import '../anchor/anchor_teleprompter_screen.dart';
 import '../stage_display/stage_display_screen.dart';
@@ -16,6 +20,7 @@ class RoleSelectionScreen extends StatefulWidget {
 
 class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   final TextEditingController _codeController = TextEditingController(text: AppConstants.demoJoinCode);
+  StreamSubscription<RemoteMessage>? _notificationSubscription;
 
   @override
   void initState() {
@@ -23,11 +28,25 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<EventProvider>().loadEvent(AppConstants.demoEventId);
     });
+
+    _notificationSubscription = FirebaseService().onNotificationReceived.listen((message) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('🔔 ${message.notification?.title ?? 'New Notification'}: ${message.notification?.body ?? ''}'),
+            backgroundColor: AppTheme.liveGreen,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    });
   }
 
   @override
   void dispose() {
     _codeController.dispose();
+    _notificationSubscription?.cancel();
     super.dispose();
   }
 
@@ -234,6 +253,39 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   );
                 },
               ),
+              const SizedBox(height: 32),
+
+              // Notification Test Button
+              Center(
+                child: TextButton.icon(
+                  onPressed: () async {
+                    await FirebaseService().showTestNotification();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Test notification sent! Check your system tray.'),
+                          backgroundColor: AppTheme.cyan,
+                          behavior: SnackBarBehavior.floating,
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.notifications_active_rounded, color: AppTheme.cyan),
+                  label: const Text(
+                    'Trigger Test Notification',
+                    style: TextStyle(color: AppTheme.cyan, fontWeight: FontWeight.bold),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    backgroundColor: AppTheme.cyan.withOpacity(0.1),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
