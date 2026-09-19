@@ -23,6 +23,9 @@ mobile/ios/.symlinks/
 .env
 .env.local
 .env.*.local
+*firebase-adminsdk*.json
+*-adminsdk-*.json
+*service-account*.json
 
 # Logs & OS
 npm-debug.log*

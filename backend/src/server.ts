@@ -7,6 +7,7 @@ import { speakersRouter } from "./routes/speakers.js";
 import { aiRouter } from "./routes/ai.js";
 import { publicRouter } from "./routes/public.js";
 import { uploadRouter } from "./routes/upload.js";
+import { authRouter } from "./routes/auth.js";
 import { APP_NAME, APP_TAGLINE } from "./config/constants.js";
 import "./config/db.js";
 import "./config/cloudinary.js";
@@ -49,6 +50,7 @@ app.get("/api/health", (req, res) => {
 });
 
 // Mount modular API routes
+app.use("/api/auth", authRouter);
 app.use("/api/events", eventsRouter);
 app.use("/api/events", agendaRouter);
 app.use("/api/events", speakersRouter);

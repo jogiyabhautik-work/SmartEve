@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/services/tts_service.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/event_provider.dart';
+import '../dashboard/stagepilot_dashboard_screen.dart';
+import '../auth/login_screen.dart';
+import '../auth/role_selection_screen.dart';
 
 class AnchorTeleprompterScreen extends StatefulWidget {
   const AnchorTeleprompterScreen({super.key});
@@ -67,6 +71,15 @@ class _AnchorTeleprompterScreenState extends State<AnchorTeleprompterScreen> {
     }
   }
 
+  void _handleSignOut() async {
+    await AuthService().signOut();
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -76,7 +89,7 @@ class _AnchorTeleprompterScreenState extends State<AnchorTeleprompterScreen> {
           Consumer<EventProvider>(
             builder: (context, provider, _) {
               return Container(
-                margin: const EdgeInsets.only(right: 16),
+                margin: const EdgeInsets.only(right: 8),
                 alignment: Alignment.center,
                 child: Text(
                   provider.formattedCountdown,
@@ -88,6 +101,60 @@ class _AnchorTeleprompterScreenState extends State<AnchorTeleprompterScreen> {
                 ),
               );
             },
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert_rounded, color: AppTheme.textPrimary),
+            color: AppTheme.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: AppTheme.border),
+            ),
+            onSelected: (value) {
+              if (value == 'organizer') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const StagePilotDashboardScreen()),
+                );
+              } else if (value == 'roles') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
+                );
+              } else if (value == 'logout') {
+                _handleSignOut();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'organizer',
+                child: Row(
+                  children: [
+                    Icon(Icons.dashboard_customize_rounded, size: 18, color: AppTheme.cyan),
+                    SizedBox(width: 10),
+                    Text('Organizer Suite', style: TextStyle(color: AppTheme.textPrimary, fontSize: 13)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'roles',
+                child: Row(
+                  children: [
+                    Icon(Icons.swap_horiz_rounded, size: 18, color: AppTheme.warningAmber),
+                    SizedBox(width: 10),
+                    Text('Switch Role / Join Code', style: TextStyle(color: AppTheme.textPrimary, fontSize: 13)),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout_rounded, size: 18, color: AppTheme.dangerRose),
+                    SizedBox(width: 10),
+                    Text('Sign Out', style: TextStyle(color: AppTheme.dangerRose, fontSize: 13)),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

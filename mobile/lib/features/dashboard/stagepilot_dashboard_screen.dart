@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../core/services/auth_service.dart';
+import '../auth/login_screen.dart';
+import '../anchor/anchor_teleprompter_screen.dart';
+import '../auth/role_selection_screen.dart';
 
 class AppSlateColors {
   static const Color slate300 = Color(0xFFCBD5E1);
@@ -19,6 +23,15 @@ class StagePilotDashboardScreen extends StatefulWidget {
 class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
   int _selectedIndex = 0;
   int _settingsTabIndex = 0;
+
+  void _handleSignOut() async {
+    await AuthService().signOut();
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  }
 
   // Mock Delay State for Interactive Preview
   int _delayMinutes = 15;
@@ -163,6 +176,12 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 12),
+          TextButton.icon(
+            icon: const Icon(Icons.logout_rounded, size: 16, color: AppSlateColors.rose400),
+            label: const Text('Sign Out', style: TextStyle(color: AppSlateColors.rose400, fontSize: 13)),
+            onPressed: _handleSignOut,
+          ),
         ],
       ),
     );
@@ -234,10 +253,73 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
             icon: const Icon(Icons.notifications_none_rounded, color: AppSlateColors.slate600),
             onPressed: () {},
           ),
-          const CircleAvatar(
-            radius: 16,
-            backgroundColor: Color(0xFF2563EB),
-            child: Text('RT', style: TextStyle(color: Colors.white, fontSize: 12)),
+          PopupMenuButton<String>(
+            color: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            onSelected: (value) {
+              if (value == 'anchor') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const AnchorTeleprompterScreen()),
+                );
+              } else if (value == 'roles') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
+                );
+              } else if (value == 'logout') {
+                _handleSignOut();
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                enabled: false,
+                child: Text(
+                  AuthService().currentAppUser?.fullName ?? 'Organizer',
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                ),
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem(
+                value: 'anchor',
+                child: Row(
+                  children: [
+                    Icon(Icons.mic_external_on_rounded, size: 18, color: Color(0xFF10B981)),
+                    SizedBox(width: 8),
+                    Text('Anchor Teleprompter', style: TextStyle(fontSize: 13)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'roles',
+                child: Row(
+                  children: [
+                    Icon(Icons.swap_horiz_rounded, size: 18, color: Color(0xFFF59E0B)),
+                    SizedBox(width: 8),
+                    Text('Switch Role / Join Code', style: TextStyle(fontSize: 13)),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout_rounded, size: 18, color: Color(0xFFEF4444)),
+                    SizedBox(width: 8),
+                    Text('Sign Out', style: TextStyle(color: Color(0xFFEF4444), fontSize: 13)),
+                  ],
+                ),
+              ),
+            ],
+            child: CircleAvatar(
+              radius: 16,
+              backgroundColor: const Color(0xFF2563EB),
+              child: Text(
+                AuthService().currentAppUser?.fullName.isNotEmpty == true
+                    ? AuthService().currentAppUser!.fullName.substring(0, 1).toUpperCase()
+                    : 'SP',
+                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+            ),
           ),
         ],
       ),

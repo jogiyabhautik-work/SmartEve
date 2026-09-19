@@ -23,3 +23,8 @@ ios/Flutter/Flutter.framework
 ios/Flutter/Generated.xcconfig
 ios/Pods/
 ios/.symlinks/
+
+# Secrets & Service Accounts
+*firebase-adminsdk*.json
+*-adminsdk-*.json
+*service-account*.json

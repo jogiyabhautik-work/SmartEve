@@ -12,6 +12,7 @@ class AppTheme {
   static const Color liveGreen = Color(0xFF10B981);
   static const Color warningAmber = Color(0xFFF59E0B);
   static const Color dangerRose = Color(0xFFEF4444);
+  static const Color alertRed = dangerRose;
   static const Color primaryPurple = Color(0xFF6366F1);
 
   static const Color textPrimary = Color(0xFFF9FAFB);
