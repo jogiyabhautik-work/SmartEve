@@ -24,8 +24,9 @@ class AuthButton extends StatelessWidget {
         child: OutlinedButton(
           onPressed: isLoading ? null : onPressed,
           style: OutlinedButton.styleFrom(
-            foregroundColor: AppTheme.textPrimary,
-            side: const BorderSide(color: AppTheme.border),
+            foregroundColor: AppTheme.primaryBlue,
+            side: const BorderSide(color: AppTheme.primaryBlue, width: 1.5),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           child: _buildContent(),
         ),
@@ -38,9 +39,15 @@ class AuthButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.primaryPurple,
+          backgroundColor: AppTheme.primaryBlue,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: AppTheme.primaryPurple.withOpacity(0.5),
+          disabledBackgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.5),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
+            letterSpacing: 0.5,
+          ),
         ),
         child: _buildContent(),
       ),

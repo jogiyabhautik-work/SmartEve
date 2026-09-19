@@ -318,7 +318,7 @@ class _AnchorRegistrationScreenState extends State<AnchorRegistrationScreen> {
                 return FilterChip(
                   label: Text(spec),
                   selected: isSelected,
-                  selectedColor: AppTheme.cyan.withOpacity(0.2),
+                  selectedColor: AppTheme.cyan.withValues(alpha: 0.2),
                   checkmarkColor: AppTheme.cyan,
                   backgroundColor: AppTheme.surfaceLight,
                   side: BorderSide(color: isSelected ? AppTheme.cyan : AppTheme.border),
@@ -446,9 +446,9 @@ class _AnchorRegistrationScreenState extends State<AnchorRegistrationScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Summary', style: TextStyle(color: AppTheme.cyan, fontWeight: FontWeight.bold)),
+                  const Text('Summary', style: TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
-                  Text('Role: Anchor / Host', style: const TextStyle(color: AppTheme.textPrimary)),
+                  const Text('Role: Anchor / Host', style: TextStyle(color: AppTheme.textPrimary)),
                   Text('Name: ${_data.fullName}', style: const TextStyle(color: AppTheme.textSecondary)),
                   Text('Email: ${_data.email}', style: const TextStyle(color: AppTheme.textSecondary)),
                   Text('Experience: ${_data.anchoringExperience.toInt()} yrs', style: const TextStyle(color: AppTheme.textSecondary)),
@@ -458,7 +458,7 @@ class _AnchorRegistrationScreenState extends State<AnchorRegistrationScreen> {
             const SizedBox(height: 32),
             CheckboxListTile(
               title: const Text('I agree to the Terms & Conditions', style: TextStyle(color: AppTheme.textPrimary, fontSize: 14)),
-              activeColor: AppTheme.cyan,
+              activeColor: AppTheme.primaryBlue,
               value: _data.termsAccepted,
               onChanged: (v) => setState(() => _data.termsAccepted = v!),
               controlAffinity: ListTileControlAffinity.leading,
@@ -471,7 +471,7 @@ class _AnchorRegistrationScreenState extends State<AnchorRegistrationScreen> {
               ),
             CheckboxListTile(
               title: const Text('I agree to the Privacy Policy', style: TextStyle(color: AppTheme.textPrimary, fontSize: 14)),
-              activeColor: AppTheme.cyan,
+              activeColor: AppTheme.primaryBlue,
               value: _data.privacyAccepted,
               onChanged: (v) => setState(() => _data.privacyAccepted = v!),
               controlAffinity: ListTileControlAffinity.leading,

@@ -357,13 +357,13 @@ class _OrganizerRegistrationScreenState extends State<OrganizerRegistrationScree
             const SizedBox(height: 32),
             SwitchListTile(
               title: const Text('Receive Notifications', style: TextStyle(color: AppTheme.textPrimary)),
-              activeColor: AppTheme.cyan,
+              activeThumbColor: AppTheme.primaryBlue,
               value: _data.receiveNotifications,
               onChanged: (v) => setState(() => _data.receiveNotifications = v),
             ),
             SwitchListTile(
               title: const Text('Receive Emails', style: TextStyle(color: AppTheme.textPrimary)),
-              activeColor: AppTheme.cyan,
+              activeThumbColor: AppTheme.primaryBlue,
               value: _data.receiveEmails,
               onChanged: (v) => setState(() => _data.receiveEmails = v),
             ),
@@ -393,9 +393,9 @@ class _OrganizerRegistrationScreenState extends State<OrganizerRegistrationScree
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Summary', style: TextStyle(color: AppTheme.cyan, fontWeight: FontWeight.bold)),
+                  const Text('Summary', style: TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
-                  Text('Role: Organizer', style: const TextStyle(color: AppTheme.textPrimary)),
+                  const Text('Role: Organizer', style: TextStyle(color: AppTheme.textPrimary)),
                   Text('Name: ${_data.fullName}', style: const TextStyle(color: AppTheme.textSecondary)),
                   Text('Email: ${_data.email}', style: const TextStyle(color: AppTheme.textSecondary)),
                   Text('College: ${_data.collegeName}', style: const TextStyle(color: AppTheme.textSecondary)),
@@ -405,7 +405,7 @@ class _OrganizerRegistrationScreenState extends State<OrganizerRegistrationScree
             const SizedBox(height: 32),
             CheckboxListTile(
               title: const Text('I agree to the Terms & Conditions', style: TextStyle(color: AppTheme.textPrimary, fontSize: 14)),
-              activeColor: AppTheme.cyan,
+              activeColor: AppTheme.primaryBlue,
               value: _data.termsAccepted,
               onChanged: (v) => setState(() => _data.termsAccepted = v!),
               controlAffinity: ListTileControlAffinity.leading,
@@ -418,7 +418,7 @@ class _OrganizerRegistrationScreenState extends State<OrganizerRegistrationScree
               ),
             CheckboxListTile(
               title: const Text('I agree to the Privacy Policy', style: TextStyle(color: AppTheme.textPrimary, fontSize: 14)),
-              activeColor: AppTheme.cyan,
+              activeColor: AppTheme.primaryBlue,
               value: _data.privacyAccepted,
               onChanged: (v) => setState(() => _data.privacyAccepted = v!),
               controlAffinity: ListTileControlAffinity.leading,

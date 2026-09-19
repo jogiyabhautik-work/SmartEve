@@ -60,7 +60,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
           ),
           decoration: InputDecoration(
             filled: true,
-            fillColor: AppTheme.background,
+            fillColor: AppTheme.surface,
             hintText: widget.hint,
             hintStyle: const TextStyle(color: AppTheme.textMuted),
             prefixIcon: widget.prefixIcon != null
@@ -91,7 +91,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppTheme.cyan, width: 2),
+              borderSide: const BorderSide(color: AppTheme.primaryBlue, width: 2),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

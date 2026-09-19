@@ -7,9 +7,7 @@ class CloudinaryService {
   final ApiClient _apiClient = ApiClient();
   final ImagePicker _picker = ImagePicker();
 
-  /**
-   * Prompts user to pick an image from gallery or camera and uploads to Cloudinary
-   */
+  /// Prompts user to pick an image from gallery or camera and uploads to Cloudinary
   Future<String?> pickAndUploadSpeakerPhoto({ImageSource source = ImageSource.gallery}) async {
     try {
       final XFile? file = await _picker.pickImage(

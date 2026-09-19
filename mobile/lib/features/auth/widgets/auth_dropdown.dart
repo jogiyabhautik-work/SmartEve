@@ -31,10 +31,10 @@ class AuthDropdown<T> extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<T>(
-          value: value,
+          initialValue: value,
           items: items,
           onChanged: onChanged,
-          dropdownColor: AppTheme.surfaceLight,
+          dropdownColor: AppTheme.surface,
           style: const TextStyle(
             fontSize: 15,
             color: AppTheme.textPrimary,
@@ -42,7 +42,7 @@ class AuthDropdown<T> extends StatelessWidget {
           icon: const Icon(Icons.arrow_drop_down, color: AppTheme.textMuted),
           decoration: InputDecoration(
             filled: true,
-            fillColor: AppTheme.background,
+            fillColor: AppTheme.surface,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -54,7 +54,7 @@ class AuthDropdown<T> extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppTheme.cyan, width: 2),
+              borderSide: const BorderSide(color: AppTheme.primaryBlue, width: 2),
             ),
           ),
         ),

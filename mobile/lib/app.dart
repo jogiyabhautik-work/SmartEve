@@ -16,7 +16,7 @@ class SmartEveApp extends StatelessWidget {
       child: MaterialApp(
         title: 'SmartEve',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.darkTheme,
+        theme: AppTheme.lightTheme,
         home: const SplashScreen(),
       ),
     );

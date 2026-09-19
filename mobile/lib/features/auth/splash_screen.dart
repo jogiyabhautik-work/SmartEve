@@ -74,7 +74,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   errorBuilder: (context, error, stackTrace) => const Icon(
                     Icons.sensors_rounded,
                     size: 100,
-                    color: AppTheme.cyan,
+                    color: AppTheme.primaryBlue,
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -92,8 +92,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   'Mission-critical mobile co-pilot',
                   style: TextStyle(
                     fontSize: 14,
-                    color: AppTheme.cyan,
+                    color: AppTheme.primaryBlue,
                     letterSpacing: 1.5,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 48),
@@ -102,7 +103,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   height: 24,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.cyan),
+                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBlue),
                   ),
                 ),
               ],

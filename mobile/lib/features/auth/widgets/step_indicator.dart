@@ -25,7 +25,7 @@ class StepIndicator extends StatelessWidget {
                 fontSize: 11,
                 letterSpacing: 2,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.cyan,
+                color: AppTheme.primaryBlue,
               ),
             ),
           ],
@@ -42,8 +42,8 @@ class StepIndicator extends StatelessWidget {
                 height: 4,
                 decoration: BoxDecoration(
                   color: isCompleted
-                      ? AppTheme.cyan
-                      : (isCurrent ? AppTheme.cyan.withOpacity(0.5) : AppTheme.border),
+                      ? AppTheme.primaryBlue
+                      : (isCurrent ? AppTheme.primaryBlue.withValues(alpha: 0.5) : AppTheme.border),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),

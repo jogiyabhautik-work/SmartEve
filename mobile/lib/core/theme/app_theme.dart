@@ -2,31 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Mission-Critical Dark Control-Room Palette
-  static const Color background = Color(0xFF0B1020);
-  static const Color surface = Color(0xFF111C38);
-  static const Color surfaceLight = Color(0xFF1A284F);
-  static const Color border = Color(0xFF223468);
+  // Modern Clean Light Palette (Default Overall App Theme)
+  static const Color background = Color(0xFFF8FAFC);
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color surfaceLight = Color(0xFFF1F5F9);
+  static const Color border = Color(0xFFE2E8F0);
 
-  static const Color cyan = Color(0xFF00F0FF);
+  static const Color primaryBlue = Color(0xFF2563EB);
+  static const Color cyan = Color(0xFF0284C7);
   static const Color liveGreen = Color(0xFF10B981);
   static const Color warningAmber = Color(0xFFF59E0B);
   static const Color dangerRose = Color(0xFFEF4444);
   static const Color alertRed = dangerRose;
   static const Color primaryPurple = Color(0xFF6366F1);
 
-  static const Color textPrimary = Color(0xFFF9FAFB);
-  static const Color textSecondary = Color(0xFF9CA3AF);
-  static const Color textMuted = Color(0xFF6B7280);
+  static const Color textPrimary = Color(0xFF0F172A);
+  static const Color textSecondary = Color(0xFF475569);
+  static const Color textMuted = Color(0xFF94A3B8);
 
-  static ThemeData get darkTheme {
+  static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
+      brightness: Brightness.light,
       scaffoldBackgroundColor: background,
-      primaryColor: cyan,
-      colorScheme: const ColorScheme.dark(
-        primary: cyan,
+      primaryColor: primaryBlue,
+      colorScheme: const ColorScheme.light(
+        primary: primaryBlue,
         secondary: primaryPurple,
         surface: surface,
         error: dangerRose,
@@ -52,10 +53,11 @@ class AppTheme {
         ),
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: background,
+        backgroundColor: surface,
         elevation: 0,
         centerTitle: true,
-        iconTheme: IconThemeData(color: cyan),
+        scrolledUnderElevation: 0,
+        iconTheme: IconThemeData(color: textPrimary),
         titleTextStyle: TextStyle(
           color: textPrimary,
           fontSize: 18,
@@ -64,8 +66,8 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: cyan,
-          foregroundColor: Colors.black,
+          backgroundColor: primaryBlue,
+          foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           shape: RoundedRectangleBorder(
@@ -79,8 +81,8 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: cyan,
-          side: const BorderSide(color: cyan, width: 1.5),
+          foregroundColor: primaryBlue,
+          side: const BorderSide(color: primaryBlue, width: 1.5),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -93,4 +95,6 @@ class AppTheme {
       ),
     );
   }
+
+  static ThemeData get darkTheme => lightTheme;
 }

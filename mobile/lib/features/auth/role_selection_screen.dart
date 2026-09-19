@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
@@ -66,24 +65,14 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               const SizedBox(height: 16),
               // App Brand Header
               Center(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surface,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppTheme.cyan.withOpacity(0.3), width: 1.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.cyan.withOpacity(0.15),
-                        blurRadius: 24,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
+                child: Image.asset(
+                  'assets/trans_icon.png',
+                  width: 70,
+                  height: 70,
+                  errorBuilder: (context, error, stackTrace) => const Icon(
                     Icons.sensors_rounded,
                     size: 48,
-                    color: AppTheme.cyan,
+                    color: AppTheme.primaryBlue,
                   ),
                 ),
               ),
@@ -99,13 +88,13 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 ),
               ),
               const SizedBox(height: 6),
-              Text(
+              const Text(
                 AppConstants.appTagline,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
-                  color: AppTheme.cyan,
-                  fontWeight: FontWeight.w500,
+                  color: AppTheme.primaryBlue,
+                  fontWeight: FontWeight.w600,
                   letterSpacing: 1,
                 ),
               ),
@@ -139,14 +128,14 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 2,
-                        color: AppTheme.cyan,
+                        color: AppTheme.primaryBlue,
                       ),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: AppTheme.background,
+                        fillColor: AppTheme.surfaceLight,
                         hintText: 'e.g. TN26',
                         hintStyle: const TextStyle(color: AppTheme.textMuted),
-                        prefixIcon: const Icon(Icons.qr_code_rounded, color: AppTheme.cyan),
+                        prefixIcon: const Icon(Icons.qr_code_rounded, color: AppTheme.primaryBlue),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -158,7 +147,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppTheme.cyan, width: 2),
+                          borderSide: const BorderSide(color: AppTheme.primaryBlue, width: 2),
                         ),
                       ),
                     ),
@@ -221,10 +210,10 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
-                        color: hasEvent ? AppTheme.liveGreen.withOpacity(0.12) : AppTheme.surface,
+                        color: hasEvent ? AppTheme.liveGreen.withValues(alpha: 0.12) : AppTheme.surface,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: hasEvent ? AppTheme.liveGreen.withOpacity(0.4) : AppTheme.border,
+                          color: hasEvent ? AppTheme.liveGreen.withValues(alpha: 0.4) : AppTheme.border,
                         ),
                       ),
                       child: Row(
@@ -280,7 +269,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   ),
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    backgroundColor: AppTheme.cyan.withOpacity(0.1),
+                    backgroundColor: AppTheme.cyan.withValues(alpha: 0.1),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -320,7 +309,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: badgeColor.withOpacity(0.15),
+                  color: badgeColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(icon, color: badgeColor, size: 28),
@@ -346,7 +335,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: badgeColor.withOpacity(0.2),
+                            color: badgeColor.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(

@@ -54,8 +54,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 Expanded(child: Text(errorMsg)),
               ],
             ),
-            backgroundColor: AppTheme.alertRed,
+            backgroundColor: AppTheme.dangerRose,
             duration: const Duration(seconds: 4),
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -82,6 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
           content: Text('👋 Welcome back, Anchor! Opening your teleprompter...'),
           backgroundColor: AppTheme.liveGreen,
           duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
         ),
       );
       Navigator.of(context).pushAndRemoveUntil(
@@ -96,6 +98,7 @@ class _LoginScreenState extends State<LoginScreen> {
           content: Text('👋 Welcome back, Organizer! Opening StagePilot Dashboard...'),
           backgroundColor: AppTheme.liveGreen,
           duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
         ),
       );
       Navigator.of(context).pushAndRemoveUntil(
@@ -105,6 +108,129 @@ class _LoginScreenState extends State<LoginScreen> {
         (route) => false,
       );
     }
+  }
+
+  void _showForgotPasswordDialog() {
+    final resetEmailController = TextEditingController(text: _emailController.text);
+    final resetFormKey = GlobalKey<FormState>();
+    bool isSending = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: 24,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
+              child: Form(
+                key: resetFormKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Reset Password',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded, color: AppTheme.textMuted),
+                          onPressed: () => Navigator.pop(ctx),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Enter your registered email address and we will send you password reset instructions.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.textSecondary,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    AuthTextField(
+                      label: 'Email Address',
+                      hint: 'name@organization.com',
+                      prefixIcon: Icons.email_outlined,
+                      controller: resetEmailController,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) {
+                          return 'Please enter your email';
+                        }
+                        if (!val.contains('@')) {
+                          return 'Please enter a valid email';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    AuthButton(
+                      text: 'SEND RESET LINK',
+                      isLoading: isSending,
+                      onPressed: () async {
+                        if (resetFormKey.currentState!.validate()) {
+                          setModalState(() => isSending = true);
+                          try {
+                            await AuthService().sendPasswordResetEmail(resetEmailController.text);
+                            if (!mounted) return;
+                            Navigator.pop(ctx);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Row(
+                                  children: [
+                                    const Icon(Icons.mark_email_read_rounded, color: Colors.white),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        'Reset link sent to ${resetEmailController.text}. Please check your inbox.',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                backgroundColor: AppTheme.liveGreen,
+                                duration: const Duration(seconds: 4),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          } catch (err) {
+                            setModalState(() => isSending = false);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(err.toString().replaceAll('Exception: ', '')),
+                                backgroundColor: AppTheme.dangerRose,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -119,20 +245,20 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 Center(
                   child: Image.asset(
                     'assets/trans_icon.png',
-                    width: 80,
-                    height: 80,
+                    width: 90,
+                    height: 90,
                     errorBuilder: (context, error, stackTrace) => const Icon(
                       Icons.sensors_rounded,
-                      size: 60,
-                      color: AppTheme.cyan,
+                      size: 64,
+                      color: AppTheme.primaryBlue,
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
                 const Text(
                   'Welcome Back',
                   textAlign: TextAlign.center,
@@ -151,7 +277,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: AppTheme.textSecondary,
                   ),
                 ),
-                const SizedBox(height: 36),
+                const SizedBox(height: 32),
                 AuthTextField(
                   label: 'Email Address',
                   hint: 'Enter your email',
@@ -182,37 +308,30 @@ class _LoginScreenState extends State<LoginScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Password reset instructions will be sent to your registered email.'),
-                          backgroundColor: AppTheme.surfaceLight,
-                        ),
-                      );
-                    },
+                    onPressed: _showForgotPasswordDialog,
                     child: const Text(
                       'Forgot Password?',
                       style: TextStyle(
-                        color: AppTheme.cyan,
+                        color: AppTheme.primaryBlue,
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
                 AuthButton(
                   text: 'LOGIN',
                   onPressed: _handleLogin,
                   isLoading: _isLoading,
                 ),
-                const SizedBox(height: 24),
-                Row(
-                  children: const [
+                const SizedBox(height: 28),
+                const Row(
+                  children: [
                     Expanded(child: Divider(color: AppTheme.border)),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
@@ -229,15 +348,16 @@ class _LoginScreenState extends State<LoginScreen> {
                     Expanded(child: Divider(color: AppTheme.border)),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        icon: const Icon(Icons.dashboard_customize_rounded, size: 16, color: AppTheme.cyan),
-                        label: const Text('Organizer', style: TextStyle(fontSize: 12, color: AppTheme.cyan, fontWeight: FontWeight.bold)),
+                        icon: const Icon(Icons.dashboard_customize_rounded, size: 16, color: AppTheme.primaryBlue),
+                        label: const Text('Organizer', style: TextStyle(fontSize: 12, color: AppTheme.primaryBlue, fontWeight: FontWeight.bold)),
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: AppTheme.cyan.withOpacity(0.4)),
+                          backgroundColor: AppTheme.surface,
+                          side: BorderSide(color: AppTheme.primaryBlue.withValues(alpha: 0.4)),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
@@ -250,7 +370,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         icon: const Icon(Icons.mic_external_on_rounded, size: 16, color: AppTheme.liveGreen),
                         label: const Text('Anchor', style: TextStyle(fontSize: 12, color: AppTheme.liveGreen, fontWeight: FontWeight.bold)),
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: AppTheme.liveGreen.withOpacity(0.4)),
+                          backgroundColor: AppTheme.surface,
+                          side: BorderSide(color: AppTheme.liveGreen.withValues(alpha: 0.4)),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
@@ -264,6 +385,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   icon: const Icon(Icons.qr_code_rounded, size: 16, color: AppTheme.textSecondary),
                   label: const Text('Join with Event Code (e.g. TN26)', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
                   style: OutlinedButton.styleFrom(
+                    backgroundColor: AppTheme.surface,
                     side: const BorderSide(color: AppTheme.border),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -274,7 +396,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     );
                   },
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 28),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -291,7 +413,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: const Text(
                         'Register',
                         style: TextStyle(
-                          color: AppTheme.cyan,
+                          color: AppTheme.primaryBlue,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

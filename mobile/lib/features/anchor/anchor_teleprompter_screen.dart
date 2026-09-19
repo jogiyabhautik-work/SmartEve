@@ -180,7 +180,7 @@ class _AnchorTeleprompterScreenState extends State<AnchorTeleprompterScreen> {
                     children: [
                       CircleAvatar(
                         radius: 28,
-                        backgroundColor: AppTheme.cyan.withOpacity(0.2),
+                        backgroundColor: AppTheme.cyan.withValues(alpha: 0.2),
                         backgroundImage: (speaker?.photoUrl != null && speaker!.photoUrl!.isNotEmpty)
                             ? CachedNetworkImageProvider(speaker.photoUrl!)
                             : null,
@@ -277,10 +277,10 @@ class _AnchorTeleprompterScreenState extends State<AnchorTeleprompterScreen> {
                   decoration: BoxDecoration(
                     color: AppTheme.surface,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppTheme.cyan.withOpacity(0.5), width: 1.5),
+                    border: Border.all(color: AppTheme.cyan.withValues(alpha: 0.5), width: 1.5),
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.cyan.withOpacity(0.08),
+                        color: AppTheme.cyan.withValues(alpha: 0.08),
                         blurRadius: 20,
                         spreadRadius: 2,
                       ),
@@ -295,7 +295,7 @@ class _AnchorTeleprompterScreenState extends State<AnchorTeleprompterScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: AppTheme.cyan.withOpacity(0.15),
+                              color: AppTheme.cyan.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
@@ -313,7 +313,7 @@ class _AnchorTeleprompterScreenState extends State<AnchorTeleprompterScreen> {
                               ],
                             ),
                           ),
-                          Text(
+                          const Text(
                             'SPEAK OUT LOUD',
                             style: TextStyle(
                               fontSize: 11,

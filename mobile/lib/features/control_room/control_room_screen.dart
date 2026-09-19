@@ -120,7 +120,7 @@ class ControlRoomScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppTheme.liveGreen.withOpacity(0.2),
+                        color: AppTheme.liveGreen.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: AppTheme.liveGreen),
                       ),
@@ -150,12 +150,12 @@ class ControlRoomScreen extends StatelessWidget {
                     color: AppTheme.surface,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isOvertime ? AppTheme.dangerRose : AppTheme.cyan.withOpacity(0.4),
+                      color: isOvertime ? AppTheme.dangerRose : AppTheme.cyan.withValues(alpha: 0.4),
                       width: 1.5,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: (isOvertime ? AppTheme.dangerRose : AppTheme.cyan).withOpacity(0.1),
+                        color: (isOvertime ? AppTheme.dangerRose : AppTheme.cyan).withValues(alpha: 0.1),
                         blurRadius: 20,
                         spreadRadius: 2,
                       ),
@@ -179,7 +179,7 @@ class ControlRoomScreen extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: AppTheme.dangerRose.withOpacity(0.2),
+                                color: AppTheme.dangerRose.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: const Text(
@@ -343,8 +343,8 @@ class ControlRoomScreen extends StatelessWidget {
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: nextSession.isBreak
-                                ? AppTheme.warningAmber.withOpacity(0.15)
-                                : AppTheme.cyan.withOpacity(0.15),
+                                ? AppTheme.warningAmber.withValues(alpha: 0.15)
+                                : AppTheme.cyan.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
@@ -411,9 +411,9 @@ class ControlRoomScreen extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.12),
+            color: color.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withOpacity(0.4)),
+            border: Border.all(color: color.withValues(alpha: 0.4)),
           ),
           child: Column(
             children: [
