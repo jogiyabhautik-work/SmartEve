@@ -12,6 +12,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@neon/config": "^1.7.2",
+    "@neon/env": "^1.4.3",
     "@neondatabase/serverless": "^0.10.4",
     "cloudinary": "^2.5.1",
     "cors": "^2.8.5",
