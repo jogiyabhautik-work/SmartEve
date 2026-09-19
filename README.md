@@ -1,18 +1,18 @@
 # 🚀 SmartEve & Stage Flow
-### *"Your Mission-Critical Event Co-Pilot"*
+### *"Your Mission-Critical Live Event Co-Pilot"*
 
-> **A mission-critical live stage management system featuring a deterministic schedule reflow engine, multi-device real-time synchronization, quad-tier fail-safe AI anchor assistance, modern light theme UI, and cloud-native backend infrastructure.**
+> **A mission-critical live stage management platform featuring a deterministic schedule reflow engine, real-time multi-device synchronization, quad-tier fail-safe AI anchor assistance, and modern light-themed UI.**
 
 ---
 
 ## 📌 1. Project Description
 
-**SmartEve** is an enterprise-grade live event coordination and stage management platform designed to solve the chaotic reality of live conference, auditorium, and festival management.
+**SmartEve** is an enterprise-grade live event coordination and stage management platform built to handle the unpredictable dynamics of live conferences, auditoriums, festivals, and summits.
 
-During live events, schedule shifts are inevitable: keynotes run overtime, speakers arrive late, or impromptu stage announcements are required. Traditional paper agendas and manual messaging channels crumble under these high-pressure scenarios, causing cascading delays and confused attendees.
+During live events, schedule shifts are inevitable: keynote presentations run overtime, VIP speakers arrive late, or impromptu stage announcements are required. Traditional static paper agendas and manual messaging channels fail under high-pressure scenarios, causing cascading delays and confused audiences.
 
 **SmartEve solves this by providing:**
-1. **Deterministic Schedule Reflow Engine**: When a session goes overtime or an organizer triggers a time adjustment (e.g., `+15m`), the system instantly recalculates downstream start times across the entire agenda while preserving hard stops (e.g., lunch breaks, venue closures) and safety buffers.
+1. **Deterministic Schedule Reflow Engine**: When a session runs overtime or an organizer triggers a time adjustment (e.g., `+15m`), the system instantly recalculates downstream start times across the entire agenda while preserving hard stops (e.g., lunch breaks, venue closures) and safety buffers.
 2. **Multi-Role Tailored Interfaces**:
    - **Control Room Dashboard**: Gives event managers instant oversight of live session timers, speaker arrival statuses, and delay controls.
    - **Anchor Teleprompter**: Equips stage hosts with AI-generated speaker intros, stage talking points, auto-scrolling teleprompter, and built-in Text-to-Speech (TTS) read-aloud capabilities.
@@ -33,7 +33,6 @@ During live events, schedule shifts are inevitable: keynotes run overtime, speak
 - **Speech Synthesis**: `flutter_tts` for on-device script read-aloud and anchor practice
 - **Image Handling & CDN**: `cached_network_image` and `image_picker` integrated with Cloudinary CDN
 - **Push Alerts**: `firebase_messaging` & `flutter_local_notifications`
-- **Native Assets & Icons**: `flutter_launcher_icons` (`smartEVE-icon.png` launcher & `trans_icon.png` notification icon)
 
 ### **Backend (API Server)**
 - **Runtime & Language**: Node.js & TypeScript (`.ts`)
@@ -56,7 +55,17 @@ During live events, schedule shifts are inevitable: keynotes run overtime, speak
 
 ---
 
-## 📈 3. Progress Till Now (Detailed Work Completed)
+## 📱 3. App Icons & Branding
+
+SmartEve includes custom high-resolution visual branding assets for native application icons and notification system drawables:
+
+- **App Launcher Icon (`assets/smartEVE-icon.png`)**: Configured via `flutter_launcher_icons` to generate native Android app launcher icons across all screen density directories (`mipmap-hdpi`, `mdpi`, `xhdpi`, `xxhdpi`, `xxxhdpi`).
+- **Notification Icon (`assets/trans_icon.png`)**: Transparent vector graphic placed in Android native resources (`drawable/trans_icon.png` & `drawable/ic_notification.png`) and linked to `AndroidManifest.xml` as the default status bar notification icon.
+- **In-App Branding**: Integrated `trans_icon.png` on the animated Splash screen and the Login screen header.
+
+---
+
+## 📈 4. Progress Till Now (Work Completed)
 
 ### 🎨 A. Complete Light Theme UI Regeneration
 - **App Theme Infrastructure (`lib/core/theme/app_theme.dart`)**:
@@ -77,35 +86,33 @@ During live events, schedule shifts are inevitable: keynotes run overtime, speak
 - Created an interactive **Forgot Password** modal bottom sheet in `LoginScreen` complete with email validation, sending state spinner, and floating success/error snackbars.
 
 ### 📱 C. Native App Icon & Notification Icon Setup
-- **App Launcher Icon**: Configured `assets/smartEVE-icon.png` in `pubspec.yaml` and generated native launcher icons across Android density directories (`mipmap-hdpi`, `mdpi`, `xhdpi`, `xxhdpi`, `xxxhdpi`).
-- **Transparent Notification Icon**: Positioned `assets/trans_icon.png` into Android drawable folders (`trans_icon.png` & `ic_notification.png`), updated `AndroidManifest.xml` default notification icon metadata, and updated local notification settings in `FirebaseService`.
-- Integrated `trans_icon.png` as the official brand graphic on Splash and Login screens.
+- Configured `smartEVE-icon.png` as launcher icon and generated native density drawables.
+- Positioned `trans_icon.png` into Android resource drawables and updated `AndroidManifest.xml` and `FirebaseService`.
 
 ### ⚙️ D. Backend API & Reflow Engine Implementation
-- **Deterministic Reflow Engine (`backend/src/services/reflow.ts`)**: Programmed schedule shifting algorithms that recalculate session timings dynamically upon delay triggers (`+15m`, `-5m`).
-- **Neon PostgreSQL Database Schema (`backend/src/db/schema.sql`)**: Created relational tables for `events`, `agenda_items`, `speakers`, `fcm_tokens`, and `users`.
-- **Express REST API Routes (`backend/src/routes/`)**: Implemented endpoints for event state, agenda items, speaker profiles, Cloudinary image uploads, AI script generation, and public display syncing.
+- Programmed schedule reflow engine algorithm (`backend/src/services/reflow.ts`) that shifts session timings dynamically upon delay triggers (`+15m`, `-5m`).
+- Neon PostgreSQL relational schemas (`backend/src/db/schema.sql`) for events, agenda items, speakers, fcm tokens, and user profiles.
+- Express REST API endpoints (`backend/src/routes/`) for event lifecycle, agenda management, speaker profiles, Cloudinary image upload, and AI script generation.
 
 ### 🤖 E. Quad-AI Teleprompter & TTS Integration
 - **Anchor Teleprompter Screen (`anchor_teleprompter_screen.dart`)**: Real-time live countdown timer, speaker profile overview, AI script generator, auto-scroll speed controls, and quick navigation.
 - **Text-To-Speech (`tts_service.dart`)**: Integrated `flutter_tts` allowing anchors to listen to AI-generated scripts in real time for stage practice.
 
-### 🧹 F. Automated Code Cleanup & Quality Verification
-- Ran `dart fix --apply` resolving 41 automatic lint items across 13 files.
-- Executed `dart analyze` confirming **0 static analysis errors**.
-- Cleared build cache with `flutter clean` and `flutter pub get`.
+### 🧹 F. Code Quality & Zero-Error Verification
+- Executed `dart fix --apply` applying 41 automatic fixes across 13 files.
+- Verified zero static analysis errors (`dart analyze`).
 
 ---
 
-## 🏗️ Repository Architecture
+## 🏗️ 5. Repository Architecture
 
 ```
 SmartEve/
 │
 ├── backend/                      # Standalone TypeScript (.ts) Backend API
 │   ├── src/
-│   │   ├── config/               # DB pool, Cloudinary & Firebase Admin configs
-│   │   ├── db/                   # Neon PostgreSQL schema (events, agenda, speakers, users)
+│   │   ├── config/               # Neon DB, Cloudinary & Firebase Admin configs
+│   │   ├── db/                   # Neon PostgreSQL schema definitions
 │   │   ├── middleware/           # Firebase Bearer token authorization
 │   │   ├── routes/               # Events, Agenda, Speakers, AI & Upload API routes
 │   │   ├── services/             # Schedule reflow engine & Quad-AI cascade providers
@@ -115,10 +122,10 @@ SmartEve/
 │   └── package.json
 │
 ├── mobile/                       # Flutter Mobile Application (Dart)
-│   ├── android/                  # Android scaffolding, launcher icons & drawables
-│   ├── assets/                   # smartEVE-icon.png & trans_icon.png
+│   ├── android/                  # Android native scaffolding & drawables
+│   ├── assets/                   # App icons (smartEVE-icon.png, trans_icon.png)
 │   ├── lib/
-│   │   ├── main.dart             # Flutter app entry point (Firebase initialization)
+│   │   ├── main.dart             # Flutter app entry point
 │   │   ├── app.dart              # MaterialApp & AppTheme.lightTheme setup
 │   │   ├── core/                 # Theme, ApiClient, AuthService, FirebaseService, TTS
 │   │   ├── models/               # Dart models (Event, AgendaItem, Speaker, Script)
@@ -129,25 +136,21 @@ SmartEve/
 │   │       ├── anchor/           # Anchor Teleprompter & TTS script player
 │   │       ├── stage_display/    # Stage Projector countdown billboard
 │   │       └── agenda/           # Event agenda schedule timeline
-│   └── pubspec.yaml              # Dependencies & flutter_launcher_icons configuration
+│   └── pubspec.yaml              # Dependencies & launcher icon configuration
 │
 └── README.md                     # Root project documentation
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🚀 6. Getting Started
 
 ### 1. Configure Backend Environment (`backend/.env`)
 Copy `backend/.env.example` to `backend/.env` and supply your credentials:
-```bash
-DATABASE_URL=postgresql://user:pass@ep-cool-db.neon.tech/smarteve?sslmode=require
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-GEMINI_API_KEY=your_gemini_key
-GROQ_API_KEY=your_groq_key
-```
+- `DATABASE_URL`: Neon.tech PostgreSQL connection string
+- `CLOUDINARY_*`: Cloudinary cloud name, API key & secret
+- `FIREBASE_ADMIN_*`: Firebase Admin credentials
+- `GEMINI_API_KEY`, `GROQ_API_KEY`, `NVIDIA_NIM_API_KEY`, `OPENROUTER_API_KEY`
 
 ### 2. Start the Backend API (`backend/`)
 ```bash
