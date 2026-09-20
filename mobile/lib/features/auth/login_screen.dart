@@ -3,8 +3,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
 import '../anchor/anchor_dashboard_screen.dart';
 import '../organizer/screens/organizer_dashboard_screen.dart';
-import '../admin/admin_dashboard_screen.dart';
-import '../attendee/attendee_screen.dart';
+
 import 'role_selection_screen.dart';
 import 'widgets/auth_text_field.dart';
 import 'widgets/auth_button.dart';

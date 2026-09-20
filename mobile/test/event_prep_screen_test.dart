@@ -99,7 +99,7 @@ void main() {
     await pumpPrepScreen(tester);
 
     // Checklist not complete -> Go Live is gated
-    expect(find.text('Complete checklist to Go Live'), findsWidgets);
+    expect(find.text('Go Live (available at event time)'), findsWidgets);
     expect(find.text('Contact Organizer'), findsOneWidget);
     expect(find.text('Request Script Change'), findsOneWidget);
 

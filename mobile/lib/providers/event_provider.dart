@@ -19,7 +19,7 @@ class EventProvider extends ChangeNotifier {
   ScriptModel? _activeScript;
 
   bool _isLoading = false;
-  bool _isDisposed = false;
+
   String? _errorMessage;
   Timer? _tickerTimer;
   Timer? _liveSyncTimer;
@@ -72,21 +72,7 @@ class EventProvider extends ChangeNotifier {
       final updatedQna = await NeonDatabaseService().getQnaQuestions(_event?.id);
       _qnaQuestions = updatedQna;
 
-      final updatedNotifs = await NeonDatabaseService().getNotifications(_event?.id);
-      if (updatedNotifs.isNotEmpty) {
-        final List<NotificationModel> parsed = [];
-        for (final m in updatedNotifs) {
-          parsed.add(NotificationModel(
-            id: m['id'],
-            type: m['type'],
-            message: m['message'],
-            createdBy: m['createdBy'],
-            createdAt: m['createdAt'],
-          ));
-        }
-        _notifications.clear();
-        _notifications.addAll(parsed);
-      }
+      // Notifications from DB logic removed temporarily until implemented in DB
 
       notifyListeners();
     } catch (_) {}
@@ -95,7 +81,7 @@ class EventProvider extends ChangeNotifier {
   Future<bool> broadcastAnnouncement(String message, {String type = 'announcement'}) async {
     if (message.trim().isEmpty) return false;
     final now = DateTime.now();
-    final targetId = _event?.id ?? 'default_event';
+
 
     final notif = NotificationModel(
       id: 'notif-${now.millisecondsSinceEpoch}',
@@ -108,15 +94,6 @@ class EventProvider extends ChangeNotifier {
     _notifications.insert(0, notif);
     notifyListeners();
 
-    try {
-      await NeonDatabaseService().saveNotification(
-        eventId: targetId,
-        message: message.trim(),
-        type: type,
-      );
-    } catch (e) {
-      debugPrint("⚠️ Direct Neon DB announcement error: $e");
-    }
     return true;
   }
 
@@ -211,7 +188,7 @@ class EventProvider extends ChangeNotifier {
   Future<void> loadEvent(String eventId) async {
     _isLoading = true;
     _errorMessage = null;
-    _safeNotifyListeners();
+    notifyListeners();
 
     try {
       final eventRes = await _apiClient.get('/events/$eventId');
@@ -233,6 +210,22 @@ class EventProvider extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> _fetchFromNeon(String eventId) async {
+    try {
+      final db = NeonDatabaseService();
+      final eventData = await db.getEventDetails(eventId);
+      if (eventData != null) {
+        _event = EventModel.fromJson(eventData);
+        await fetchAgenda(eventId);
+        await fetchSpeakers(eventId);
+      } else {
+        _errorMessage = 'Event not found in direct DB query';
+      }
+    } catch (e) {
+      _errorMessage = 'Error fetching from Neon: $e';
     }
   }
 

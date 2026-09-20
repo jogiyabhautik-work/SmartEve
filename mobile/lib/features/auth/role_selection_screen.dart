@@ -12,7 +12,7 @@ import '../stage_display/stage_display_screen.dart';
 import '../organizer/screens/organizer_dashboard_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
 import '../attendee/attendee_screen.dart';
-import '../events/event_details_screen.dart';
+
 
 class RoleSelectionScreen extends StatefulWidget {      
   const RoleSelectionScreen({super.key});
