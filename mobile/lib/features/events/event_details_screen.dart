@@ -827,17 +827,18 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   }
 
   EventModel _buildFallbackEvent() {
+    final now = DateTime.now();
     return EventModel(
-      id: 'demo-event-2026',
-      name: 'TechNova Live Summit 2026',
+      id: 'event-${now.millisecondsSinceEpoch}',
+      name: 'SmartEve Stage Event',
       type: 'Conference',
-      date: 'September 20, 2026',
-      venue: 'Main Auditorium & Stage A',
-      tone: 'Inspiring & Technical',
-      ownerId: 'org-demo',
-      joinCode: 'TN26',
-      liveState: LiveStateModel(status: 'live', totalDelayMin: 0),
-      createdAt: DateTime.now().millisecondsSinceEpoch,
+      date: '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}',
+      venue: 'Main Auditorium',
+      tone: 'Inspiring & Engaging',
+      ownerId: 'organizer',
+      joinCode: 'EVT1',
+      liveState: LiveStateModel(status: 'draft', totalDelayMin: 0),
+      createdAt: now.millisecondsSinceEpoch,
     );
   }
 }

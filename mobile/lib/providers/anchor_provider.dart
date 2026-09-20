@@ -33,137 +33,14 @@ class AnchorProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Sticky Event Invitations (Seeded default, updated live from backend)
-  final List<AnchorInvitation> _invitations = [
-    const AnchorInvitation(
-      id: 'inv_1',
-      eventId: 'evt_gdg_1',
-      title: 'GDG DevFest Annual Tech Keynote',
-      eventType: 'Conference',
-      organizerName: 'Sarah Jenkins',
-      collegeName: 'Stanford Engineering Hub',
-      date: 'Oct 24, 2026',
-      time: '10:00 AM - 01:00 PM',
-      invitedAt: '10m ago',
-      venue: 'Main Auditorium A',
-      description: 'Annual flagship developer conference keynote and open stage emcee.',
-    ),
-    const AnchorInvitation(
-      id: 'inv_2',
-      eventId: 'evt_hack_2',
-      title: 'AI Innovators Global Hackathon Finals',
-      eventType: 'Hackathon',
-      organizerName: 'Marcus Vance',
-      collegeName: 'MIT Media Lab',
-      date: 'Nov 02, 2026',
-      time: '02:00 PM - 06:00 PM',
-      invitedAt: '1h ago',
-      venue: 'Grand Ballroom',
-      description: 'Host final pitching rounds and live awards presentation ceremony.',
-    ),
-  ];
+  // Sticky Event Invitations (Updated live from Neon DB / API backend)
+  final List<AnchorInvitation> _invitations = [];
 
-  // Upcoming Events (Seeded default, updated live from backend)
-  final List<AnchorEventCardItem> _upcomingEvents = [
-    const AnchorEventCardItem(
-      id: 'up_1',
-      title: 'TechNova Live Summit 2026',
-      eventType: 'Tech Summit',
-      date: 'Oct 28, 2026',
-      time: '09:00 AM - 12:00 PM',
-      organizerName: 'Alex Rivera',
-      collegeName: 'TechNova Convention Center',
-      status: AnchorEventStatus.accepted,
-      joinCode: 'CNS26',
-      venue: 'Hall B',
-      duration: '3h 00m',
-    ),
-    const AnchorEventCardItem(
-      id: 'up_2',
-      title: 'Quantum Computing Symposium',
-      eventType: 'Symposium',
-      date: 'Nov 05, 2026',
-      time: '11:00 AM - 02:00 PM',
-      organizerName: 'Elena Rostova',
-      collegeName: 'Oxford Institute',
-      status: AnchorEventStatus.active,
-      joinCode: 'QCS26',
-      venue: 'Virtual Stage 1',
-      duration: '3h 00m',
-    ),
-    const AnchorEventCardItem(
-      id: 'up_3',
-      title: 'NextGen Robotics Showcase',
-      eventType: 'Showcase',
-      date: 'Nov 12, 2026',
-      time: '01:00 PM - 04:00 PM',
-      organizerName: 'David Chen',
-      collegeName: 'Carnegie Mellon Hall',
-      status: AnchorEventStatus.accepted,
-      joinCode: 'NRS26',
-      venue: 'Expo Arena',
-      duration: '3h 00m',
-    ),
-    const AnchorEventCardItem(
-      id: 'up_4',
-      title: 'CyberSecurity Leadership Forum',
-      eventType: 'Forum',
-      date: 'Nov 18, 2026',
-      time: '03:00 PM - 06:00 PM',
-      organizerName: 'Sophia Taylor',
-      collegeName: 'Columbia University',
-      status: AnchorEventStatus.accepted,
-      joinCode: 'CLF26',
-      venue: 'Auditorium 3',
-      duration: '3h 00m',
-    ),
-  ];
+  // Upcoming Events (Updated live from Neon DB / API backend)
+  final List<AnchorEventCardItem> _upcomingEvents = [];
 
-  // Completed Events (Seeded default, updated live from backend)
-  final List<AnchorEventCardItem> _completedEvents = [
-    const AnchorEventCardItem(
-      id: 'comp_1',
-      title: 'Silicon Valley AI Mixer',
-      eventType: 'Networking',
-      date: 'Sep 15, 2026',
-      time: '06:00 PM - 09:00 PM',
-      organizerName: 'Priya Sharma',
-      collegeName: 'San Jose Civic',
-      status: AnchorEventStatus.completed,
-      joinCode: 'SVM26',
-      venue: 'Skyline Lounge',
-      duration: '3h 00m',
-      recapSummary: 'Over 300 tech founders and investors connected seamlessly.',
-    ),
-    const AnchorEventCardItem(
-      id: 'comp_2',
-      title: 'FullStack Developer Day',
-      eventType: 'Workshop',
-      date: 'Sep 02, 2026',
-      time: '10:00 AM - 04:00 PM',
-      organizerName: 'Jordan Hayes',
-      collegeName: 'DevHub NYC',
-      status: AnchorEventStatus.completed,
-      joinCode: 'FSD26',
-      venue: 'Workshop Studio',
-      duration: '6h 00m',
-      recapSummary: 'Interactive hands-on session with 98% attendee satisfaction.',
-    ),
-    const AnchorEventCardItem(
-      id: 'comp_3',
-      title: 'FinTech Revolution Conference',
-      eventType: 'Conference',
-      date: 'Aug 20, 2026',
-      time: '09:00 AM - 05:00 PM',
-      organizerName: 'Arthur Dent',
-      collegeName: 'London School of Economics',
-      status: AnchorEventStatus.completed,
-      joinCode: 'FTR26',
-      venue: 'Grand Hall',
-      duration: '8h 00m',
-      recapSummary: 'Keynote panels delivered on schedule with dynamic emcee pacing.',
-    ),
-  ];
+  // Completed Events (Updated live from Neon DB / API backend)
+  final List<AnchorEventCardItem> _completedEvents = [];
 
   // Getters
   String get searchQuery => _searchQuery;
