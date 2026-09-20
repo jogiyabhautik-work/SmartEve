@@ -1716,14 +1716,9 @@ class NeonDatabaseService {
     }
   }
 
-<<<<<<< HEAD
   /// Fetch user notification preferences directly from Neon PostgreSQL
   Future<Map<String, dynamic>?> getNotificationPreferences(String userId) async {
     if (!_isUuid(userId)) return null;
-=======
-  /// Fetch Anchor Dashboard Data directly from Neon PostgreSQL
-  Future<Map<String, dynamic>?> getAnchorDashboardData([String? userId]) async {
->>>>>>> e6bf1a47b7d488a3bb9d10c1f4527de45c4e1d92
     Connection? connection;
     try {
       connection = await _getConnection();
