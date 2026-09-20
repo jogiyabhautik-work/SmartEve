@@ -23,7 +23,4 @@ class AppConstants {
         return 'http://localhost:4000/api';
     }
   }
-
-  static const String demoJoinCode = 'TN26';
-  static const String demoEventId = 'technova-2026';
 }

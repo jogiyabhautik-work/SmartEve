@@ -130,14 +130,17 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         MaterialPageRoute(builder: (_) => const StagePilotDashboardScreen()),
                       );
                     },
-                    icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
-                    label: const Text(
-                      'CONTROL ROOM',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                    icon: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 20),
+                    label: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'CONTROL ROOM',
+                        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryBlue,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
@@ -153,14 +156,19 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       color: _currentEvent.liveState.status == 'published'
                           ? AppTheme.warningAmber
                           : AppTheme.liveGreen,
+                      size: 20,
                     ),
-                    label: Text(
-                      _currentEvent.liveState.status == 'published' ? 'UNPUBLISH' : 'PUBLISH EVENT',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: _currentEvent.liveState.status == 'published'
-                            ? AppTheme.warningAmber
-                            : AppTheme.liveGreen,
+                    label: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        _currentEvent.liveState.status == 'published' ? 'UNPUBLISH' : 'PUBLISH EVENT',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: _currentEvent.liveState.status == 'published'
+                              ? AppTheme.warningAmber
+                              : AppTheme.liveGreen,
+                        ),
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
@@ -169,7 +177,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             ? AppTheme.warningAmber
                             : AppTheme.liveGreen,
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
@@ -737,18 +745,21 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             ),
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: iconColor.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            badge,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: iconColor,
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: iconColor.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              badge,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: iconColor,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ),
