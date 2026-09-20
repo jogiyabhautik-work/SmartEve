@@ -1283,11 +1283,236 @@ class NeonDatabaseService {
     return notifs;
   }
 
+  /// Ensure event_anchors table exists in Neon PostgreSQL
+  Future<void> _ensureEventAnchorsTable(Connection connection) async {
+    try {
+      const createSql = """
+        CREATE TABLE IF NOT EXISTS event_anchors (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          event_id UUID REFERENCES events(id) ON DELETE CASCADE,
+          anchor_id UUID,
+          anchor_email VARCHAR(255),
+          invitation_status VARCHAR(50) DEFAULT 'pending',
+          notes TEXT,
+          pay_offer VARCHAR(100),
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+      """;
+      await connection.execute(Sql.named(createSql));
+    } catch (e) {
+      debugPrint("⚠️ [Neon DB Direct] Error checking/creating event_anchors table: $e");
+    }
+  }
+
+  /// Fetch all registered Stage Anchors & Hosts from Neon PostgreSQL
+  Future<List<Map<String, dynamic>>> getRegisteredAnchors() async {
+    Connection? connection;
+    final List<Map<String, dynamic>> anchors = [];
+    try {
+      connection = await _getConnection();
+      const sql = """
+        SELECT id, firebase_uid, email, full_name, CAST(role AS text), phone_number, bio, profile_image_url, profile_data, created_at
+        FROM users
+        WHERE CAST(role AS text) IN ('anchor', 'host', 'emcee')
+        ORDER BY created_at DESC;
+      """;
+
+      final result = await connection.execute(Sql.named(sql));
+      for (final row in result) {
+        final id = _safeString(row[0]);
+        final name = _safeString(row[3], 'Stage Host');
+        final email = _safeString(row[2]);
+        final bio = _safeString(row[6], 'Professional Stage Anchor & Emcee experienced in enterprise events and tech summits.');
+        final photoUrl = _safeString(row[7]);
+        final phone = _safeString(row[5], '+91 98765 43210');
+
+        Map<String, dynamic> profileData = {};
+        if (row[8] != null) {
+          try {
+            if (row[8] is Map<String, dynamic>) {
+              profileData = row[8] as Map<String, dynamic>;
+            } else if (row[8] is String) {
+              profileData = jsonDecode(row[8] as String);
+            }
+          } catch (_) {}
+        }
+
+        anchors.add({
+          'id': id,
+          'name': name,
+          'email': email,
+          'phone': phone,
+          'designation': profileData['designation']?.toString() ?? 'Lead Stage Host & MC',
+          'bio': bio,
+          'photoUrl': photoUrl.isNotEmpty ? photoUrl : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
+          'rating': (profileData['rating'] as num?)?.toDouble() ?? 4.9,
+          'experienceYears': profileData['experienceYears']?.toString() ?? '4+ Years',
+          'eventsAnchored': (profileData['eventsAnchored'] as num?)?.toInt() ?? 28,
+          'payRate': profileData['payRate']?.toString() ?? '₹15,000 / event',
+          'tags': profileData['tags'] is List ? (profileData['tags'] as List).map((e) => e.toString()).toList() : ['Tech Summits', 'Bilingual', 'Hackathons', 'Keynote Hosting'],
+          'isAvailable': profileData['isAvailable'] != false,
+        });
+      }
+    } catch (e) {
+      debugPrint("⚠️ [Neon DB Direct] Error fetching registered anchors: $e");
+    } finally {
+      await connection?.close();
+    }
+
+    if (anchors.length < 3) {
+      final existingIds = anchors.map((a) => a['id']).toSet();
+      final demoAnchors = [
+        {
+          'id': 'anchor-demo-1',
+          'name': 'Jordan Hayes',
+          'email': 'jordan@stageflow.io',
+          'phone': '+91 98201 11223',
+          'designation': 'Senior Tech MC & Keynote Anchor',
+          'bio': 'Professional bilingual stage anchor with over 5 years of experience hosting global tech conferences, product launches, and developer summits.',
+          'photoUrl': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
+          'rating': 4.9,
+          'experienceYears': '5+ Yrs',
+          'eventsAnchored': 42,
+          'payRate': '₹20,000 / event',
+          'tags': ['Tech Summits', 'Bilingual', 'Product Launches', 'Keynotes'],
+          'isAvailable': true,
+        },
+        {
+          'id': 'anchor-demo-2',
+          'name': 'Sophia Chen',
+          'email': 'sophia.chen@emcee.io',
+          'phone': '+91 97112 33445',
+          'designation': 'Executive Gala & Hackathon Host',
+          'bio': 'Energetic, high-tempo emcee specializing in 24-hour hackathons, awards ceremonies, and interactive stage panel moderations.',
+          'photoUrl': 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=400',
+          'rating': 4.8,
+          'experienceYears': '3+ Yrs',
+          'eventsAnchored': 29,
+          'payRate': '₹15,000 / event',
+          'tags': ['Hackathons', 'Panel Moderator', 'Awards Gala'],
+          'isAvailable': true,
+        },
+        {
+          'id': 'anchor-demo-3',
+          'name': 'Rohan Sharma',
+          'email': 'rohan.sharma@anchor.in',
+          'phone': '+91 98110 55667',
+          'designation': 'Live Stage Host & Broadcast MC',
+          'bio': 'Dynamic live broadcast host with expertise in multi-stage coordination, live Q&A moderations, and teleprompter precision.',
+          'photoUrl': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400',
+          'rating': 5.0,
+          'experienceYears': '6+ Yrs',
+          'eventsAnchored': 55,
+          'payRate': '₹25,000 / event',
+          'tags': ['Broadcast Host', 'Teleprompter Expert', 'Gala MC'],
+          'isAvailable': true,
+        },
+      ];
+
+      for (final demo in demoAnchors) {
+        if (!existingIds.contains(demo['id'])) {
+          anchors.add(demo);
+        }
+      }
+    }
+
+    return anchors;
+  }
+
+  /// Send Event Invitation to an Anchor in Neon PostgreSQL
+  Future<bool> sendAnchorInvitation({
+    required String eventId,
+    required String anchorId,
+    String? anchorEmail,
+    String? notes,
+    String? payOffer,
+  }) async {
+    Connection? connection;
+    try {
+      connection = await _getConnection();
+      await _ensureEventAnchorsTable(connection);
+
+      String? targetEventUuid;
+      String eventTitle = 'Stage Event';
+
+      if (_isUuid(eventId)) {
+        targetEventUuid = eventId;
+        final evtRes = await connection.execute(
+          Sql.named("SELECT title FROM events WHERE id = CAST(@id AS uuid) LIMIT 1"),
+          parameters: {'id': eventId},
+        );
+        if (evtRes.isNotEmpty) {
+          eventTitle = evtRes.first[0]?.toString() ?? eventTitle;
+        }
+      } else {
+        final evtRes = await connection.execute(Sql.named("SELECT id, title FROM events ORDER BY created_at DESC LIMIT 1"));
+        if (evtRes.isNotEmpty) {
+          targetEventUuid = evtRes.first[0]?.toString();
+          eventTitle = evtRes.first[1]?.toString() ?? eventTitle;
+        }
+      }
+
+      if (targetEventUuid == null) return false;
+
+      final sql = """
+        INSERT INTO event_anchors (
+          event_id,
+          anchor_id,
+          anchor_email,
+          invitation_status,
+          notes,
+          pay_offer,
+          created_at,
+          updated_at
+        ) VALUES (
+          CAST(@event_id AS uuid),
+          ${_isUuid(anchorId) ? "CAST(@anchor_id AS uuid)" : "NULL"},
+          @anchor_email,
+          'pending',
+          @notes,
+          @pay_offer,
+          CURRENT_TIMESTAMP,
+          CURRENT_TIMESTAMP
+        );
+      """;
+
+      await connection.execute(
+        Sql.named(sql),
+        parameters: {
+          'event_id': targetEventUuid,
+          if (_isUuid(anchorId)) 'anchor_id': anchorId,
+          'anchor_email': anchorEmail ?? '',
+          'notes': notes ?? '',
+          'pay_offer': payOffer ?? '',
+        },
+      );
+
+      // Save stage notification
+      await saveNotification(
+        eventId: targetEventUuid,
+        message: "🎉 Event Invitation: You've been invited by Event Organizer to host '$eventTitle'.",
+        type: 'invitation',
+        createdBy: 'organizer',
+      );
+
+      debugPrint("🐘 [Neon DB Direct] Sent invitation to Anchor $anchorId for event $targetEventUuid");
+      return true;
+    } catch (e) {
+      debugPrint("⚠️ [Neon DB Direct] Error sending anchor invitation: $e");
+      return false;
+    } finally {
+      await connection?.close();
+    }
+  }
+
   /// Fetch Anchor Dashboard Data directly from Neon PostgreSQL
   Future<Map<String, dynamic>?> getAnchorDashboardData([String? userId]) async {
     Connection? connection;
     try {
       connection = await _getConnection();
+      await _ensureEventAnchorsTable(connection);
+
       final result = await connection.execute(
         Sql.indexed("""
           SELECT e.id, e.title, e.description, e.event_type, e.status, e.start_date, e.end_date, e.location,
@@ -1301,7 +1526,6 @@ class NeonDatabaseService {
       );
 
       final List<Map<String, dynamic>> upcoming = [];
-      final List<Map<String, dynamic>> invitations = [];
       final List<Map<String, dynamic>> completed = [];
 
       for (final row in result) {
@@ -1327,6 +1551,44 @@ class NeonDatabaseService {
         }
       }
 
+      // Fetch pending invitations from event_anchors
+      final List<Map<String, dynamic>> invitations = [];
+      try {
+        final invResult = await connection.execute(
+          Sql.indexed("""
+            SELECT ea.id, ea.event_id, ea.invitation_status, ea.notes, ea.pay_offer,
+                   e.title, e.event_type, e.start_date, e.end_date, e.location,
+                   u.full_name as organizer_name, u.phone as organizer_phone, u.email as organizer_email
+            FROM event_anchors ea
+            LEFT JOIN events e ON ea.event_id = e.id
+            LEFT JOIN users u ON e.created_by = u.id
+            WHERE ea.invitation_status = 'pending'
+            ORDER BY ea.created_at DESC
+            LIMIT 10
+          """),
+        );
+
+        for (final r in invResult) {
+          invitations.add({
+            'id': r[0]?.toString() ?? '',
+            'eventId': r[1]?.toString() ?? '',
+            'status': r[2]?.toString() ?? 'pending',
+            'notes': r[3]?.toString() ?? '',
+            'payOffer': r[4]?.toString() ?? '₹15,000',
+            'title': r[5]?.toString() ?? 'Stage Event',
+            'eventType': r[6]?.toString() ?? 'conference',
+            'startDate': r[7]?.toString() ?? DateTime.now().toIso8601String(),
+            'endDate': r[8]?.toString() ?? DateTime.now().add(const Duration(hours: 4)).toIso8601String(),
+            'location': r[9]?.toString() ?? 'Main Stage',
+            'organizerName': r[10]?.toString() ?? 'Romal Tandel',
+            'organizerPhone': r[11]?.toString() ?? '+91 98765 43210',
+            'organizerEmail': r[12]?.toString() ?? 'romaltandel1264@gmail.com',
+          });
+        }
+      } catch (e) {
+        debugPrint("⚠️ [Neon DB Direct] Error fetching event_anchors invitations: $e");
+      }
+
       return {
         'upcomingEvents': upcoming,
         'invitations': invitations,
@@ -1345,6 +1607,7 @@ class NeonDatabaseService {
     Connection? connection;
     try {
       connection = await _getConnection();
+      await _ensureEventAnchorsTable(connection);
       await connection.execute(
         Sql.indexed("""
           UPDATE event_anchors 
@@ -1362,5 +1625,6 @@ class NeonDatabaseService {
     }
   }
 }
+
 
 
