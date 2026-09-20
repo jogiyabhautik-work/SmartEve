@@ -7,6 +7,7 @@ import '../../../providers/event_provider.dart';
 import '../../dashboard/stagepilot_dashboard_screen.dart';
 import 'agenda_add_screen.dart';
 import 'speaker_add_screen.dart';
+import '../../events/widgets/find_anchors_modal.dart';
 
 class EventDetailScreen extends StatefulWidget {
   final EventModel event;
@@ -278,7 +279,20 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             ),
             const SizedBox(height: 12),
 
-            // Team & Anchors
+            // Find & Invite Anchors
+            _buildModuleCard(
+              icon: Icons.person_search_rounded,
+              iconColor: AppTheme.liveGreen,
+              title: 'Find & Invite Stage Anchors',
+              subtitle: 'Browse registered hosts in Neon DB & send stage event invitations',
+              badge: 'EXPLORE TALENT',
+              onTap: () {
+                FindAnchorsModal.show(context, _currentEvent);
+              },
+            ),
+            const SizedBox(height: 12),
+
+            // Team & Anchors Code
             _buildModuleCard(
               icon: Icons.people_alt_rounded,
               iconColor: AppTheme.warningAmber,

@@ -206,12 +206,14 @@ class _FeedbackRowState extends State<FeedbackRow> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 6,
+          runSpacing: 4,
           children: [
             const Text('Was this helpful?', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-            const SizedBox(width: 8),
+            const SizedBox(width: 2),
             _thumb(m.wasHelpful == true, Icons.thumb_up_alt_rounded, 'Helpful', true),
-            const SizedBox(width: 6),
             _thumb(m.wasHelpful == false, Icons.thumb_down_alt_rounded, 'Not helpful', false),
           ],
         ),

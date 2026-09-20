@@ -6,6 +6,7 @@ import '../../core/widgets/smarteve_ai_fab.dart';
 import '../../models/event_model.dart';
 import '../../providers/event_provider.dart';
 import '../anchor/anchor_teleprompter_screen.dart';
+import 'widgets/find_anchors_modal.dart';
 
 class EventDetailsScreen extends StatefulWidget {
   final EventModel? event;
@@ -302,6 +303,44 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
           subtitle: 'Share with anchors and backstage team',
           icon: Icons.qr_code_2_rounded,
           color: AppTheme.secondaryPurple,
+        ),
+        const SizedBox(height: 12),
+        InkWell(
+          onTap: () => FindAnchorsModal.show(context, event),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.liveGreen.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.liveGreen.withValues(alpha: 0.4)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.liveGreen.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.person_search_rounded, color: AppTheme.liveGreen, size: 24),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Find & Invite Stage Anchors', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+                      SizedBox(height: 2),
+                      Text('Explore registered hosts in Neon DB & send invitations', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded, color: AppTheme.liveGreen),
+              ],
+            ),
+          ),
         ),
       ],
     );
