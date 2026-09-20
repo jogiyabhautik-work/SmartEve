@@ -62,11 +62,12 @@ class NeonDatabaseService {
       await connection.execute(Sql.named(createSql));
 
       const alterSql = """
-        ALTER TABLE speakers ADD COLUMN IF NOT EXISTS designation VARCHAR(255);
-        ALTER TABLE speakers ADD COLUMN IF NOT EXISTS organization VARCHAR(255);
-        ALTER TABLE speakers ADD COLUMN IF NOT EXISTS expertise_area VARCHAR(255);
-        ALTER TABLE speakers ADD COLUMN IF NOT EXISTS bio TEXT;
-        ALTER TABLE speakers ADD COLUMN IF NOT EXISTS profile_image_url TEXT;
+        ALTER TABLE speakers 
+          ADD COLUMN IF NOT EXISTS designation VARCHAR(255),
+          ADD COLUMN IF NOT EXISTS organization VARCHAR(255),
+          ADD COLUMN IF NOT EXISTS expertise_area VARCHAR(255),
+          ADD COLUMN IF NOT EXISTS bio TEXT,
+          ADD COLUMN IF NOT EXISTS profile_image_url TEXT;
       """;
       await connection.execute(Sql.named(alterSql));
     } catch (e) {
@@ -164,18 +165,18 @@ class NeonDatabaseService {
       final cleanEmail = email.trim().toLowerCase();
 
       final result = await connection.execute(
-        Sql.named("SELECT id, firebase_uid, email, full_name, role FROM users WHERE LOWER(email) = @email LIMIT 1"),
+        Sql.named("SELECT id, firebase_uid, email, full_name, CAST(role AS text) FROM users WHERE LOWER(email) = @email LIMIT 1"),
         parameters: {'email': cleanEmail},
       );
 
       if (result.isNotEmpty) {
         final row = result.first;
         return {
-          'id': row[0]?.toString(),
-          'firebase_uid': row[1]?.toString(),
-          'email': row[2]?.toString(),
-          'full_name': row[3]?.toString(),
-          'role': row[4]?.toString(),
+          'id': _safeString(row[0]),
+          'firebase_uid': _safeString(row[1]),
+          'email': _safeString(row[2]),
+          'full_name': _safeString(row[3]),
+          'role': _safeString(row[4]),
         };
       }
       return null;
@@ -193,18 +194,18 @@ class NeonDatabaseService {
     try {
       connection = await _getConnection();
       final result = await connection.execute(
-        Sql.named("SELECT id, firebase_uid, email, full_name, role FROM users WHERE firebase_uid = @uid LIMIT 1"),
+        Sql.named("SELECT id, firebase_uid, email, full_name, CAST(role AS text) FROM users WHERE firebase_uid = @uid LIMIT 1"),
         parameters: {'uid': uid},
       );
 
       if (result.isNotEmpty) {
         final row = result.first;
         return {
-          'id': row[0]?.toString(),
-          'firebase_uid': row[1]?.toString(),
-          'email': row[2]?.toString(),
-          'full_name': row[3]?.toString(),
-          'role': row[4]?.toString(),
+          'id': _safeString(row[0]),
+          'firebase_uid': _safeString(row[1]),
+          'email': _safeString(row[2]),
+          'full_name': _safeString(row[3]),
+          'role': _safeString(row[4]),
         };
       }
       return null;

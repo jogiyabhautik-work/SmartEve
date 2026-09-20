@@ -616,9 +616,10 @@ class AuthService {
       }
 
       // If user exists in neither Neon DB nor backend, auto-sync this Firebase user into Neon Tech
+      final isAnchorRole = cleanEmail.contains('anchor') || cleanEmail.contains('host') || cleanEmail.contains('emcee') || cleanEmail.contains('mc');
       if (neonUser == null && (role == null || role.isEmpty)) {
         debugPrint("🔄 Auto-syncing Firebase user $cleanEmail into Neon Tech DB...");
-        role = cleanEmail.contains('anchor') ? 'anchor' : 'organizer';
+        role = isAnchorRole ? 'anchor' : 'organizer';
         neonId = await _neonDb.saveUser(
           firebaseUid: firebaseUser.uid,
           email: cleanEmail,
@@ -627,7 +628,7 @@ class AuthService {
         );
       }
 
-      role ??= cleanEmail.contains('anchor') ? 'anchor' : 'organizer';
+      role ??= isAnchorRole ? 'anchor' : 'organizer';
 
       // 4. Ensure Firebase user has role and Neon UUID stored in displayName
       final targetDisplayName = "$fullName|${neonId ?? ''}|$role";

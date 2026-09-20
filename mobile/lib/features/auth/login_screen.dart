@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
-import '../anchor/anchor_teleprompter_screen.dart';
+import '../anchor/anchor_dashboard_screen.dart';
 import '../organizer/screens/organizer_dashboard_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
 import '../attendee/attendee_screen.dart';
@@ -67,10 +67,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _redirectUser(String role) {
     final lowerRole = role.toLowerCase();
-    if (lowerRole == 'anchor' || lowerRole == 'host') {
+    if (lowerRole == 'anchor' || lowerRole == 'host' || lowerRole == 'mc' || lowerRole == 'emcee' || lowerRole == 'stage_host') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('👋 Welcome back, Anchor! Opening stage teleprompter...'),
+          content: Text('👋 Welcome back, Anchor! Opening Stage Dashboard...'),
           backgroundColor: AppTheme.liveGreen,
           duration: Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
@@ -78,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (context) => const AnchorTeleprompterScreen(),
+          builder: (context) => const AnchorDashboardScreen(),
         ),
         (route) => false,
       );
