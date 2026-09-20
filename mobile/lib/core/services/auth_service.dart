@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import '../network/api_client.dart';
 import '../theme/app_theme.dart';
@@ -394,7 +395,6 @@ class AuthService {
       isFallback: credential == null,
     );
 
-    await _persistSession(_currentAppUser!);
     return _currentAppUser!;
   }
 
@@ -527,7 +527,6 @@ class AuthService {
       isFallback: credential == null,
     );
 
-    await _persistSession(_currentAppUser!);
     return _currentAppUser!;
   }
 
@@ -646,8 +645,6 @@ class AuthService {
         neonId: neonId,
       );
 
-      await _persistSession(_currentAppUser!);
-      debugPrint("✅ [Auth] Logged in ${_currentAppUser!.email} as ${_currentAppUser!.role} (Neon ID: $neonId)");
       return _currentAppUser!;
     } catch (e) {
       if (_isConfigError(e) || (e is FirebaseAuthException && (e.code == 'user-not-found' || e.code == 'invalid-credential'))) {
@@ -680,7 +677,6 @@ class AuthService {
           neonId: neonId,
           isFallback: true,
         );
-        await _persistSession(_currentAppUser!);
         debugPrint("✅ Resilient login succeeded via direct Neon Tech DB. Role: $role, Neon UUID: $neonId");
         return _currentAppUser!;
       }
@@ -707,7 +703,6 @@ class AuthService {
           neonId: neonId,
           isFallback: true,
         );
-        await _persistSession(_currentAppUser!);
         debugPrint("✅ Resilient login succeeded via backend API. Role: $role, Neon UUID: $neonId");
         return _currentAppUser!;
       } else {
@@ -738,7 +733,6 @@ class AuthService {
         neonId: 'demo-organizer-alex',
       );
     }
-    await _persistSession(_currentAppUser!);
     return _currentAppUser!;
   }
 
@@ -765,6 +759,53 @@ class AuthService {
     }
   }
 
+  Future<void> saveSession(AppUser user) async {
+    _currentAppUser = user;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('is_logged_in', true);
+      await prefs.setString('user_uid', user.uid);
+      await prefs.setString('user_email', user.email);
+      await prefs.setString('user_fullname', user.fullName);
+      await prefs.setString('user_role', user.role);
+      if (user.neonId != null) {
+        await prefs.setString('user_neon_id', user.neonId!);
+      }
+      debugPrint("💾 Saved user session: ${user.email} (${user.role})");
+    } catch (e) {
+      debugPrint("⚠️ Could not save session: $e");
+    }
+  }
+
+  Future<AppUser?> restoreSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+      if (!isLoggedIn) return null;
+
+      final uid = prefs.getString('user_uid');
+      final email = prefs.getString('user_email');
+      final fullName = prefs.getString('user_fullname');
+      final role = prefs.getString('user_role');
+      final neonId = prefs.getString('user_neon_id');
+
+      if (uid != null && email != null && role != null) {
+        _currentAppUser = AppUser(
+          uid: uid,
+          email: email,
+          fullName: fullName ?? email.split('@').first,
+          role: role,
+          neonId: neonId,
+        );
+        debugPrint("⚡ Restored active user session: $email ($role)");
+        return _currentAppUser;
+      }
+    } catch (e) {
+      debugPrint("⚠️ Could not restore session: $e");
+    }
+    return null;
+  }
+
   /// Sign out
   Future<void> signOut() async {
     try {
@@ -772,6 +813,11 @@ class AuthService {
     } catch (_) {}
     await _clearPersistedSession();
     _currentAppUser = null;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      debugPrint("🚪 User session cleared.");
+    } catch (_) {}
   }
 
   /// Format raw Firebase exceptions into clear, actionable, user-friendly messages

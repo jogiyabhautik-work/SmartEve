@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
-import '../anchor/anchor_dashboard_screen.dart';
-import '../dashboard/stagepilot_dashboard_screen.dart';
+import '../anchor/anchor_teleprompter_screen.dart';
+import '../organizer/screens/organizer_dashboard_screen.dart';
+import '../admin/admin_dashboard_screen.dart';
+import '../attendee/attendee_screen.dart';
 import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -35,43 +37,37 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller.forward();
 
-    _initAppAndRoute();
-  }
+    // Check existing login session & transition
+    Future.delayed(const Duration(milliseconds: 2200), () async {
+      final user = await AuthService().restoreSession();
+      if (!mounted) return;
 
-  Future<void> _initAppAndRoute() async {
-    // Concurrently await branded splash timing and session restoration
-    final results = await Future.wait([
-      Future.delayed(const Duration(milliseconds: 1800)),
-      AuthService().restoreSession(),
-    ]);
-
-    if (!mounted) return;
-
-    final user = results[1] as AppUser?;
-    Widget destination;
-
-    if (user != null) {
-      if (user.role.toLowerCase() == 'anchor') {
-        debugPrint("🚀 [Splash] Session active: routing Anchor (${user.fullName}) to AnchorDashboardScreen");
-        destination = const AnchorDashboardScreen();
+      Widget destination;
+      if (user != null) {
+        final role = user.role.toLowerCase();
+        if (role == 'anchor' || role == 'host') {
+          destination = const AnchorTeleprompterScreen();
+        } else if (role == 'admin') {
+          destination = const AdminDashboardScreen();
+        } else if (role == 'attendee') {
+          destination = const AttendeeScreen();
+        } else {
+          destination = const OrganizerDashboardScreen();
+        }
       } else {
-        debugPrint("🚀 [Splash] Session active: routing Organizer (${user.fullName}) to StagePilotDashboardScreen");
-        destination = const StagePilotDashboardScreen();
+        destination = const LoginScreen();
       }
-    } else {
-      debugPrint("ℹ️ [Splash] No active session: opening LoginScreen");
-      destination = const LoginScreen();
-    }
 
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => destination,
-        transitionsBuilder: (_, animation, __, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        transitionDuration: const Duration(milliseconds: 500),
-      ),
-    );
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (_, __, ___) => destination,
+          transitionsBuilder: (_, animation, __, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          transitionDuration: const Duration(milliseconds: 400),
+        ),
+      );
+    });
   }
 
   @override

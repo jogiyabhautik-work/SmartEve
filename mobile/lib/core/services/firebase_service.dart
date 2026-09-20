@@ -63,6 +63,7 @@ class FirebaseService {
       'test_channel_id',
       'Test Notifications',
       channelDescription: 'Channel for testing notifications',
+      icon: '@drawable/trans_icon',
       importance: Importance.max,
       priority: Priority.high,
     );

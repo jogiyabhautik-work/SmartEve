@@ -9,9 +9,11 @@ import '../../core/services/firebase_service.dart';
 import '../dashboard/stagepilot_dashboard_screen.dart';
 import '../anchor/anchor_dashboard_screen.dart';
 import '../stage_display/stage_display_screen.dart';
-import '../events/event_details_screen.dart';
+import '../organizer/screens/organizer_dashboard_screen.dart';
+import '../admin/admin_dashboard_screen.dart';
+import '../attendee/attendee_screen.dart';
 
-class RoleSelectionScreen extends StatefulWidget {
+class RoleSelectionScreen extends StatefulWidget {      
   const RoleSelectionScreen({super.key});
 
   @override
@@ -168,17 +170,40 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               ),
               const SizedBox(height: 14),
 
-              // Role 1: StagePilot AI Dashboard
+              // Role 0: Attendee Companion App
               _buildRoleCard(
-                icon: Icons.dashboard_rounded,
-                title: 'StagePilot AI Suite',
-                subtitle: 'Event Dashboard, Agenda, Speakers, AI Assistant & Settings',
-                badgeText: 'FULL DASHBOARD',
+                icon: Icons.smartphone_rounded,
+                title: 'Attendee Companion App',
+                subtitle: 'Real-time stage timeline, speaker roster & live audience Q&A',
+                badgeText: 'ATTENDEE',
+                badgeColor: AppTheme.cyan,
+                onTap: () => _navigateTo(const AttendeeScreen()),
+              ),
+              const SizedBox(height: 14),
+
+              // Role 1: Organizer Portal
+              _buildRoleCard(
+                icon: Icons.dashboard_customize_rounded,
+                title: 'Organizer Portal',
+                subtitle: 'Manage events, create new events, speaker roster & publish to anchors',
+                badgeText: 'ORGANIZER',
+                badgeColor: AppTheme.primaryBlue,
+                onTap: () => _navigateTo(const OrganizerDashboardScreen()),
+              ),
+              const SizedBox(height: 14),
+
+              // Role 2: StagePilot AI Suite
+              _buildRoleCard(
+                icon: Icons.tune_rounded,
+                title: 'Control Room Suite',
+                subtitle: 'Live session timers, schedule reflow engine & AI assistant',
+                badgeText: 'CONTROL ROOM',
                 badgeColor: AppTheme.primaryPurple,
                 onTap: () => _navigateTo(const StagePilotDashboardScreen()),
               ),
               const SizedBox(height: 14),
 
+              // Role 3: Anchor Teleprompter
               // Role 2: Organizer Control Room
 
               // Role 2: Anchor Suite & Dashboard
@@ -192,7 +217,18 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               ),
               const SizedBox(height: 14),
 
-              // Role 3: Public Stage Display
+              // Role 4: Admin Hub
+              _buildRoleCard(
+                icon: Icons.admin_panel_settings_rounded,
+                title: 'Admin Control Center',
+                subtitle: 'Platform oversight, user management & AI model fallback config',
+                badgeText: 'ADMIN',
+                badgeColor: AppTheme.primaryPurple,
+                onTap: () => _navigateTo(const AdminDashboardScreen()),
+              ),
+              const SizedBox(height: 14),
+
+              // Role 5: Public Stage Display
               _buildRoleCard(
                 icon: Icons.cast_connected_rounded,
                 title: 'Stage Projector Display',
