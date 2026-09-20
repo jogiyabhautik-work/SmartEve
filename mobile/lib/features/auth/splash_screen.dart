@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
-import '../anchor/anchor_teleprompter_screen.dart';
+import '../anchor/anchor_dashboard_screen.dart';
 import '../organizer/screens/organizer_dashboard_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
 import '../attendee/attendee_screen.dart';
@@ -45,8 +45,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       Widget destination;
       if (user != null) {
         final role = user.role.toLowerCase();
-        if (role == 'anchor' || role == 'host') {
-          destination = const AnchorTeleprompterScreen();
+        if (role == 'anchor' || role == 'host' || role == 'mc' || role == 'emcee' || role == 'stage_host') {
+          destination = const AnchorDashboardScreen();
         } else if (role == 'admin') {
           destination = const AdminDashboardScreen();
         } else if (role == 'attendee') {

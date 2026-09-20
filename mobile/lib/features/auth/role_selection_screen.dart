@@ -7,7 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../providers/event_provider.dart';
 import '../../core/services/firebase_service.dart';
 import '../dashboard/stagepilot_dashboard_screen.dart';
-import '../anchor/anchor_dashboard_screen.dart';
+import '../anchor/anchor_teleprompter_screen.dart';
 import '../stage_display/stage_display_screen.dart';
 import '../organizer/screens/organizer_dashboard_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
@@ -210,11 +210,11 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               // Role 2: Anchor Suite & Dashboard
               _buildRoleCard(
                 icon: Icons.mic_external_on_rounded,
-                title: 'Anchor Suite & Dashboard',
-                subtitle: 'Event invitations, upcoming assignments & stage teleprompter HUD',
+                title: 'Anchor Teleprompter',
+                subtitle: 'Speaker intros, fail-safe AI scripts & live read-aloud TTS',
                 badgeText: 'STAGE HOST',
                 badgeColor: AppTheme.liveGreen,
-                onTap: () => _navigateTo(const AnchorDashboardScreen()),
+                onTap: () => _navigateTo(const AnchorTeleprompterScreen()),
               ),
               const SizedBox(height: 14),
 
@@ -237,17 +237,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 badgeText: 'DISPLAY',
                 badgeColor: AppTheme.warningAmber,
                 onTap: () => _navigateTo(const StageDisplayScreen()),
-              ),
-              const SizedBox(height: 14),
-
-              // Role 4: Event Details & Floating Stage Hub
-              _buildRoleCard(
-                icon: Icons.event_note_rounded,
-                title: 'Event Details & Stage Hub',
-                subtitle: 'Centered dock navigation, live scripts prompter & SmartEve AI',
-                badgeText: 'EVENT DETAILS',
-                badgeColor: AppTheme.primaryBlue,
-                onTap: () => _navigateTo(const EventDetailsScreen()),
               ),
               const SizedBox(height: 32),
 

@@ -278,6 +278,95 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
     );
   }
 
+  void _showBroadcastDialog(BuildContext context) {
+    final textController = TextEditingController();
+    final messenger = ScaffoldMessenger.of(context);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.campaign_rounded, color: AppTheme.warningAmber, size: 24),
+                      SizedBox(width: 8),
+                      Text(
+                        'Broadcast Announcement',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: AppTheme.textMuted),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: textController,
+                maxLines: 3,
+                style: const TextStyle(color: AppTheme.textPrimary),
+                decoration: InputDecoration(
+                  hintText: 'Type announcement (e.g. "Tea break extended by 10 mins")...',
+                  hintStyle: const TextStyle(color: AppTheme.textMuted),
+                  filled: true,
+                  fillColor: AppTheme.background,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppTheme.border),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final msg = textController.text.trim();
+                  if (msg.isEmpty) return;
+                  Navigator.pop(ctx);
+                  final ok = await context.read<EventProvider>().broadcastAnnouncement(msg);
+                  if (ok) {
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text('📣 Broadcasted stage announcement: "$msg"'),
+                        backgroundColor: AppTheme.warningAmber,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.send_rounded, color: Colors.black),
+                label: const Text('BROADCAST TO STAGE & ATTENDEES', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.warningAmber,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -285,6 +374,11 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
       appBar: AppBar(
         title: const Text('Stage Pilot Control Room', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.campaign_rounded, color: AppTheme.warningAmber),
+            tooltip: 'Broadcast Stage Announcement',
+            onPressed: () => _showBroadcastDialog(context),
+          ),
           IconButton(
             icon: const Icon(Icons.format_list_bulleted_rounded, color: AppTheme.primaryBlue),
             tooltip: 'View Full Agenda',

@@ -226,14 +226,14 @@ class AnchorProvider extends ChangeNotifier {
       } else {
         // Fallback to direct Neon database connection
         final dbData = await _neonService.getAnchorDashboardData();
-        if (dbData.isNotEmpty) {
+        if (dbData != null && dbData.isNotEmpty) {
           _populateFromData(dbData);
         }
       }
     } catch (_) {
       try {
         final dbData = await _neonService.getAnchorDashboardData();
-        if (dbData.isNotEmpty) {
+        if (dbData != null && dbData.isNotEmpty) {
           _populateFromData(dbData);
         }
       } catch (_) {}

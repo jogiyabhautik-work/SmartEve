@@ -10,7 +10,6 @@ import '../models/speaker_model.dart';
 
 class EventProvider extends ChangeNotifier {
   final ApiClient _apiClient = ApiClient();
-  final NeonDatabaseService _neonService = NeonDatabaseService();
 
   EventModel? _event;
   List<EventModel> _organizerEvents = [];
@@ -43,16 +42,9 @@ class EventProvider extends ChangeNotifier {
 
   @override
   void dispose() {
-    _isDisposed = true;
     _tickerTimer?.cancel();
     _liveSyncTimer?.cancel();
     super.dispose();
-  }
-
-  /// Guards async completions that land after dispose.
-  void _safeNotifyListeners() {
-    if (_isDisposed) return;
-    notifyListeners();
   }
 
   void _startTicker() {
@@ -79,8 +71,53 @@ class EventProvider extends ChangeNotifier {
       }
       final updatedQna = await NeonDatabaseService().getQnaQuestions(_event?.id);
       _qnaQuestions = updatedQna;
+
+      final updatedNotifs = await NeonDatabaseService().getNotifications(_event?.id);
+      if (updatedNotifs.isNotEmpty) {
+        final List<NotificationModel> parsed = [];
+        for (final m in updatedNotifs) {
+          parsed.add(NotificationModel(
+            id: m['id'],
+            type: m['type'],
+            message: m['message'],
+            createdBy: m['createdBy'],
+            createdAt: m['createdAt'],
+          ));
+        }
+        _notifications.clear();
+        _notifications.addAll(parsed);
+      }
+
       notifyListeners();
     } catch (_) {}
+  }
+
+  Future<bool> broadcastAnnouncement(String message, {String type = 'announcement'}) async {
+    if (message.trim().isEmpty) return false;
+    final now = DateTime.now();
+    final targetId = _event?.id ?? 'default_event';
+
+    final notif = NotificationModel(
+      id: 'notif-${now.millisecondsSinceEpoch}',
+      type: type,
+      message: message.trim(),
+      createdBy: 'organizer',
+      createdAt: now.millisecondsSinceEpoch,
+    );
+
+    _notifications.insert(0, notif);
+    notifyListeners();
+
+    try {
+      await NeonDatabaseService().saveNotification(
+        eventId: targetId,
+        message: message.trim(),
+        type: type,
+      );
+    } catch (e) {
+      debugPrint("⚠️ Direct Neon DB announcement error: $e");
+    }
+    return true;
   }
 
   Future<bool> submitQnaQuestion(String question, {String? authorName}) async {
@@ -195,49 +232,14 @@ class EventProvider extends ChangeNotifier {
       await _fetchFromNeon(eventId);
     } finally {
       _isLoading = false;
-      _safeNotifyListeners();
+      notifyListeners();
     }
-  }
-
-  Future<void> _fetchFromNeon(String eventId) async {
-    try {
-      final evData = await _neonService.getEventDetails(eventId).timeout(const Duration(seconds: 1));
-      if (evData != null) {
-        _event = EventModel(
-          id: evData['id'] ?? eventId,
-          name: evData['title'] ?? 'TechNova Live AI Summit 2026',
-          type: evData['eventType'] ?? 'Conference',
-          date: evData['startDate'] != null ? evData['startDate'].toString().split('T')[0] : '2026-09-20',
-          venue: evData['location'] ?? 'Main Auditorium & Stage A',
-          tone: 'Visionary & Polished',
-          ownerId: evData['organizerName'] ?? 'Romal Tandel',
-          joinCode: 'TN26',
-          liveState: LiveStateModel(
-            status: evData['status'] ?? 'live',
-            currentItemId: null,
-            startedAt: DateTime.now().millisecondsSinceEpoch - 15 * 60 * 1000,
-            totalDelayMin: 0,
-          ),
-          createdAt: DateTime.now().millisecondsSinceEpoch,
-        );
-      }
-
-      final agendaData = await _neonService.getAgendaItems(eventId);
-      if (agendaData.isNotEmpty) {
-        _agenda = agendaData.map((m) => AgendaItemModel.fromJson(m)).toList();
-      }
-
-      final spkData = await _neonService.getSpeakers(eventId);
-      if (spkData.isNotEmpty) {
-        _speakers = spkData.map((m) => SpeakerModel.fromJson(m)).toList();
-      }
-    } catch (_) {}
   }
 
   Future<bool> startEvent() async {
     if (_event == null) return false;
     _isLoading = true;
-    _safeNotifyListeners();
+    notifyListeners();
 
     try {
       final now = DateTime.now();
@@ -307,14 +309,14 @@ class EventProvider extends ChangeNotifier {
       _errorMessage = e.toString();
     }
     _isLoading = false;
-    _safeNotifyListeners();
+    notifyListeners();
     return false;
   }
 
   Future<bool> injectDelay(int minutes, {String? reason}) async {
     if (_event == null || _agenda.isEmpty) return false;
     _isLoading = true;
-    _safeNotifyListeners();
+    notifyListeners();
 
     try {
       final now = DateTime.now();
@@ -416,19 +418,16 @@ class EventProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       _errorMessage = e.toString();
-      try {
-        await _neonService.delayAgendaItem(_event!.id, currentSession?.id, minutes, reason);
-      } catch (_) {}
     }
     _isLoading = false;
-    _safeNotifyListeners();
+    notifyListeners();
     return false;
   }
 
   Future<bool> completeCurrentSession() async {
     if (_event == null || _agenda.isEmpty) return false;
     _isLoading = true;
-    _safeNotifyListeners();
+    notifyListeners();
 
     try {
       final now = DateTime.now();
@@ -609,14 +608,9 @@ class EventProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       _errorMessage = e.toString();
-      try {
-        if (currentSession != null) {
-          await _neonService.completeAgendaItem(_event!.id, currentSession!.id);
-        }
-      } catch (_) {}
     }
     _isLoading = false;
-    _safeNotifyListeners();
+    notifyListeners();
     return false;
   }
 
@@ -642,7 +636,7 @@ class EventProvider extends ChangeNotifier {
           createdAt: DateTime.now().millisecondsSinceEpoch,
         );
         _activeScript = script;
-        _safeNotifyListeners();
+        notifyListeners();
         return script.text;
       }
     } catch (_) {}

@@ -394,6 +394,7 @@ class AuthService {
       isFallback: credential == null,
     );
 
+    await _persistSession(_currentAppUser!);
     return _currentAppUser!;
   }
 
@@ -526,6 +527,7 @@ class AuthService {
       isFallback: credential == null,
     );
 
+    await _persistSession(_currentAppUser!);
     return _currentAppUser!;
   }
 
@@ -614,9 +616,10 @@ class AuthService {
       }
 
       // If user exists in neither Neon DB nor backend, auto-sync this Firebase user into Neon Tech
+      final isAnchorRole = cleanEmail.contains('anchor') || cleanEmail.contains('host') || cleanEmail.contains('emcee') || cleanEmail.contains('mc');
       if (neonUser == null && (role == null || role.isEmpty)) {
         debugPrint("🔄 Auto-syncing Firebase user $cleanEmail into Neon Tech DB...");
-        role = cleanEmail.contains('anchor') ? 'anchor' : 'organizer';
+        role = isAnchorRole ? 'anchor' : 'organizer';
         neonId = await _neonDb.saveUser(
           firebaseUid: firebaseUser.uid,
           email: cleanEmail,
@@ -625,7 +628,7 @@ class AuthService {
         );
       }
 
-      role ??= cleanEmail.contains('anchor') ? 'anchor' : 'organizer';
+      role ??= isAnchorRole ? 'anchor' : 'organizer';
 
       // 4. Ensure Firebase user has role and Neon UUID stored in displayName
       final targetDisplayName = "$fullName|${neonId ?? ''}|$role";
@@ -644,6 +647,8 @@ class AuthService {
         neonId: neonId,
       );
 
+      await _persistSession(_currentAppUser!);
+      debugPrint("✅ [Auth] Logged in ${_currentAppUser!.email} as ${_currentAppUser!.role} (Neon ID: $neonId)");
       return _currentAppUser!;
     } catch (e) {
       if (_isConfigError(e) || (e is FirebaseAuthException && (e.code == 'user-not-found' || e.code == 'invalid-credential'))) {
@@ -676,6 +681,7 @@ class AuthService {
           neonId: neonId,
           isFallback: true,
         );
+        await _persistSession(_currentAppUser!);
         debugPrint("✅ Resilient login succeeded via direct Neon Tech DB. Role: $role, Neon UUID: $neonId");
         return _currentAppUser!;
       }
@@ -702,6 +708,7 @@ class AuthService {
           neonId: neonId,
           isFallback: true,
         );
+        await _persistSession(_currentAppUser!);
         debugPrint("✅ Resilient login succeeded via backend API. Role: $role, Neon UUID: $neonId");
         return _currentAppUser!;
       } else {
@@ -732,6 +739,7 @@ class AuthService {
         neonId: 'demo-organizer-alex',
       );
     }
+    await _persistSession(_currentAppUser!);
     return _currentAppUser!;
   }
 
@@ -784,11 +792,6 @@ class AuthService {
     } catch (_) {}
     await _clearPersistedSession();
     _currentAppUser = null;
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
-      debugPrint("🚪 User session cleared.");
-    } catch (_) {}
   }
 
   /// Format raw Firebase exceptions into clear, actionable, user-friendly messages

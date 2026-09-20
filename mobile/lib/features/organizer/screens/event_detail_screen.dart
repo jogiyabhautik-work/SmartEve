@@ -181,24 +181,26 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'STAGE TIMELINE & AGENDA',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
-                        color: AppTheme.textSecondary,
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'STAGE TIMELINE & AGENDA',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                          color: AppTheme.textSecondary,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Live session sequence synced with Neon DB',
-                      style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
-                    ),
-                  ],
+                      SizedBox(height: 2),
+                      Text(
+                        'Live session sequence synced with Neon DB',
+                        style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                      ),
+                    ],
+                  ),
                 ),
                 ElevatedButton.icon(
                   onPressed: _openAddSession,
@@ -566,35 +568,42 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: statusColor.withValues(alpha: 0.4)),
-                ),
-                child: Text(
-                  statusText,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: statusColor,
-                    letterSpacing: 1,
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: statusColor.withValues(alpha: 0.4)),
+                  ),
+                  child: Text(
+                    statusText,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: statusColor,
+                      letterSpacing: 1,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryBlue.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  'Code: ${_currentEvent.joinCode}',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryBlue,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'Code: ${_currentEvent.joinCode}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryBlue,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),
@@ -629,16 +638,22 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             children: [
               const Icon(Icons.category_rounded, size: 16, color: AppTheme.primaryBlue),
               const SizedBox(width: 6),
-              Text(
-                _currentEvent.type,
-                style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary, fontWeight: FontWeight.w600),
+              Expanded(
+                child: Text(
+                  _currentEvent.type,
+                  style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary, fontWeight: FontWeight.w600),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 8),
               const Icon(Icons.calendar_month_rounded, size: 16, color: AppTheme.primaryBlue),
               const SizedBox(width: 6),
-              Text(
-                _currentEvent.date,
-                style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+              Flexible(
+                child: Text(
+                  _currentEvent.date,
+                  style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
@@ -651,6 +666,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 child: Text(
                   _currentEvent.venue,
                   style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

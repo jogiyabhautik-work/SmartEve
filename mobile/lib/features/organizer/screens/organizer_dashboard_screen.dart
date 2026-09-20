@@ -1364,42 +1364,52 @@ class _OrganizerDashboardScreenState extends State<OrganizerDashboardScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: statusColor.withValues(alpha: 0.4)),
-                  ),
-                  child: Text(
-                    statusText,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: statusColor,
-                      letterSpacing: 0.8,
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: statusColor.withValues(alpha: 0.4)),
+                    ),
+                    child: Text(
+                      statusText,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: statusColor,
+                        letterSpacing: 0.8,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryBlue.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.qr_code_rounded, size: 14, color: AppTheme.primaryBlue),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Code: ${event.joinCode}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryBlue,
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.qr_code_rounded, size: 14, color: AppTheme.primaryBlue),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            'Code: ${event.joinCode}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryBlue,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -1435,11 +1445,14 @@ class _OrganizerDashboardScreenState extends State<OrganizerDashboardScreen> {
                   children: [
                     const Icon(Icons.calendar_today_rounded, size: 14, color: AppTheme.textMuted),
                     const SizedBox(width: 6),
-                    Text(
-                      event.date,
-                      style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                    Flexible(
+                      child: Text(
+                        event.date,
+                        style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 12),
                     const Icon(Icons.location_on_rounded, size: 14, color: AppTheme.textMuted),
                     const SizedBox(width: 6),
                     Expanded(

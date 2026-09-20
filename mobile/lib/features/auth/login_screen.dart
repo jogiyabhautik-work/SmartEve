@@ -3,6 +3,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
 import '../anchor/anchor_dashboard_screen.dart';
 import '../organizer/screens/organizer_dashboard_screen.dart';
+import '../admin/admin_dashboard_screen.dart';
+import '../attendee/attendee_screen.dart';
 import 'role_selection_screen.dart';
 import 'widgets/auth_text_field.dart';
 import 'widgets/auth_button.dart';
@@ -65,10 +67,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _redirectUser(String role) {
     final lowerRole = role.toLowerCase();
-    if (lowerRole == 'anchor' || lowerRole == 'host') {
+    if (lowerRole == 'anchor' || lowerRole == 'host' || lowerRole == 'mc' || lowerRole == 'emcee' || lowerRole == 'stage_host') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('👋 Welcome back! Opening your Anchor Dashboard...'),
+          content: Text('👋 Welcome back, Anchor! Opening Stage Dashboard...'),
           backgroundColor: AppTheme.liveGreen,
           duration: Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
@@ -112,13 +114,13 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       builder: (ctx) {
         return StatefulBuilder(
-          builder: (sheetCtx, setModalState) {
+          builder: (context, setModalState) {
             return Padding(
               padding: EdgeInsets.only(
                 left: 24,
                 right: 24,
                 top: 24,
-                bottom: MediaQuery.of(sheetCtx).viewInsets.bottom + 24,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
               ),
               child: Form(
                 key: resetFormKey,
@@ -179,28 +181,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           final messenger = ScaffoldMessenger.of(context);
                           try {
                             await AuthService().sendPasswordResetEmail(resetEmailController.text);
-                            if (!mounted) return;
-                            if (ctx.mounted) Navigator.pop(ctx);
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Row(
-                                    children: [
-                                      const Icon(Icons.mark_email_read_rounded, color: Colors.white),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: Text(
-                                          'Reset link sent to ${resetEmailController.text}. Please check your inbox.',
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  backgroundColor: AppTheme.liveGreen,
-                                  duration: const Duration(seconds: 4),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            }
                             if (ctx.mounted) {
                               Navigator.pop(ctx);
                             }
@@ -224,15 +204,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             );
                           } catch (err) {
                             setModalState(() => isSending = false);
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(err.toString().replaceAll('Exception: ', '')),
-                                  backgroundColor: AppTheme.dangerRose,
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            }
                             messenger.showSnackBar(
                               SnackBar(
                                 content: Text(err.toString().replaceAll('Exception: ', '')),
