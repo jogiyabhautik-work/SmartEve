@@ -42,6 +42,86 @@ class NeonDatabaseService {
     return RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$').hasMatch(str.trim());
   }
 
+  /// Ensure a valid event UUID is available.
+  /// If [targetEventId] is already a UUID, return it.
+  /// Otherwise, lookup the latest event UUID in Neon DB.
+  /// If no events exist in Neon DB, auto-provision a default Event and return its UUID.
+  Future<String?> _getOrProvisionEventUuid(Connection connection, String? targetEventId) async {
+    if (_isUuid(targetEventId)) {
+      return targetEventId;
+    }
+
+    try {
+      final eventResult = await connection.execute(
+        Sql.named("SELECT id FROM events ORDER BY created_at DESC LIMIT 1"),
+      );
+      if (eventResult.isNotEmpty) {
+        final foundId = eventResult.first[0]?.toString();
+        if (_isUuid(foundId)) return foundId;
+      }
+
+      // No event found in Neon DB! Auto-provision a default main stage event.
+      debugPrint("ℹ️ [Neon DB Direct] No active event found in Neon DB. Auto-provisioning default event...");
+
+      String? creatorUuid;
+      final userResult = await connection.execute(
+        Sql.named("SELECT id FROM users LIMIT 1"),
+      );
+      if (userResult.isNotEmpty) {
+        creatorUuid = userResult.first[0]?.toString();
+      } else {
+        creatorUuid = await saveUser(
+          firebaseUid: 'system_organizer_default',
+          email: 'organizer@smart-eve.io',
+          fullName: 'SmartEve Organizer',
+          role: 'organizer',
+        );
+      }
+
+      const insertSql = """
+        INSERT INTO events (
+          title,
+          description,
+          event_type,
+          start_date,
+          end_date,
+          location,
+          created_by,
+          status,
+          is_published,
+          updated_at
+        ) VALUES (
+          'SmartEve Main Stage Summit',
+          'Official Stage Summit [Tone: Visionary & Energetic | Code: TS26]',
+          CAST('seminar' AS event_type),
+          CURRENT_TIMESTAMP,
+          CURRENT_TIMESTAMP + INTERVAL '8 hours',
+          'Grand Auditorium',
+          CAST(@created_by AS uuid),
+          CAST('live' AS event_status),
+          TRUE,
+          CURRENT_TIMESTAMP
+        )
+        RETURNING id;
+      """;
+
+      final newEventResult = await connection.execute(
+        Sql.named(insertSql),
+        parameters: {'created_by': creatorUuid},
+      );
+
+      if (newEventResult.isNotEmpty) {
+        final provisionedId = newEventResult.first[0]?.toString();
+        debugPrint("🐘 [Neon DB Direct] Auto-provisioned Default Event. UUID: $provisionedId");
+        return provisionedId;
+      }
+    } catch (e) {
+      debugPrint("⚠️ [Neon DB Direct] Error provisioning default event UUID: $e");
+    }
+
+    return null;
+  }
+
   /// Ensure speakers table and columns exist in Neon PostgreSQL
   Future<void> _ensureSpeakersTable(Connection connection) async {
     try {
@@ -477,6 +557,35 @@ class NeonDatabaseService {
         );
       }
       debugPrint("🐘 [Neon DB Direct] Fetched ${eventsList.length} events directly from Neon DB.");
+
+      if (eventsList.isEmpty) {
+        debugPrint("ℹ️ [Neon DB Direct] No events in DB. Provisioning initial default event...");
+        await _getOrProvisionEventUuid(connection, null);
+        final retryResult = await connection.execute(Sql.named(sql));
+        for (final row in retryResult) {
+          final id = _safeString(row[0]);
+          final title = _safeString(row[1], 'Untitled Event');
+          final rawDesc = _safeString(row[2]);
+          final rawType = _safeString(row[3], 'Conference');
+          final venue = _safeString(row[5], 'Main Auditorium');
+          final ownerId = _safeString(row[6]);
+          eventsList.add(
+            EventModel(
+              id: id,
+              name: title,
+              type: rawType.toUpperCase(),
+              date: DateTime.now().toString().split(' ')[0],
+              venue: venue,
+              tone: 'Visionary & Energetic',
+              description: rawDesc.split('\n[').first.trim(),
+              ownerId: ownerId,
+              joinCode: id.length >= 4 ? id.substring(0, 4).toUpperCase() : 'TS26',
+              liveState: LiveStateModel(status: 'live'),
+              createdAt: DateTime.now().millisecondsSinceEpoch,
+            ),
+          );
+        }
+      }
     } catch (e) {
       debugPrint("⚠️ [Neon DB Direct] Error fetching events: $e");
     } finally {
@@ -492,17 +601,7 @@ class NeonDatabaseService {
       connection = await _getConnection();
       await _ensureSpeakersTable(connection);
 
-      String? eventUuid;
-      if (_isUuid(targetEventId)) {
-        eventUuid = targetEventId;
-      } else {
-        final eventResult = await connection.execute(
-          Sql.named("SELECT id FROM events ORDER BY created_at DESC LIMIT 1"),
-        );
-        if (eventResult.isNotEmpty) {
-          eventUuid = eventResult.first[0]?.toString();
-        }
-      }
+      final eventUuid = await _getOrProvisionEventUuid(connection, targetEventId);
 
       if (eventUuid == null) {
         debugPrint("⚠️ Cannot save speaker without an event UUID in Neon DB.");
@@ -620,10 +719,16 @@ class NeonDatabaseService {
       }
       sql += " ORDER BY created_at ASC; ";
 
-      final result = await connection.execute(
+      var result = await connection.execute(
         Sql.named(sql),
         parameters: _isUuid(targetEventId) ? {'event_id': targetEventId} : {},
       );
+
+      // Fallback: If targeted search by eventId returned no speakers, fetch all speakers in DB
+      if (result.isEmpty && _isUuid(targetEventId)) {
+        const fallbackSql = "SELECT id, name, designation, organization, expertise_area, bio, profile_image_url FROM speakers ORDER BY created_at ASC;";
+        result = await connection.execute(Sql.named(fallbackSql));
+      }
 
       for (final row in result) {
         final id = row[0]?.toString() ?? '';
@@ -703,23 +808,132 @@ class NeonDatabaseService {
       """;
       await connection.execute(Sql.named(createSql));
 
-      const alterSql = """
-        ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS item_type VARCHAR(50) DEFAULT 'talk';
-        ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS duration_minutes INTEGER DEFAULT 15;
-        ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS planned_start TIMESTAMP WITH TIME ZONE;
-        ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS start_time TIMESTAMP WITH TIME ZONE;
-        ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS end_time TIMESTAMP WITH TIME ZONE;
-        ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'upcoming';
-        ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS is_absorbable BOOLEAN DEFAULT FALSE;
-        ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS min_duration_minutes INTEGER;
-        ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS hard_start BOOLEAN DEFAULT FALSE;
-        ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS notes TEXT;
-        ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS order_index INTEGER DEFAULT 0;
-        ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS speaker_ids JSONB DEFAULT '[]'::jsonb;
-      """;
-      await connection.execute(Sql.named(alterSql));
+      final alterStatements = [
+        "ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS item_type VARCHAR(50) DEFAULT 'talk';",
+        "ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS duration_minutes INTEGER DEFAULT 15;",
+        "ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS planned_start TIMESTAMP WITH TIME ZONE;",
+        "ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS start_time TIMESTAMP WITH TIME ZONE;",
+        "ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS end_time TIMESTAMP WITH TIME ZONE;",
+        "ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'upcoming';",
+        "ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS is_absorbable BOOLEAN DEFAULT FALSE;",
+        "ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS min_duration_minutes INTEGER;",
+        "ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS hard_start BOOLEAN DEFAULT FALSE;",
+        "ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS notes TEXT;",
+        "ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS order_index INTEGER DEFAULT 0;",
+        "ALTER TABLE agenda_items ADD COLUMN IF NOT EXISTS speaker_ids JSONB DEFAULT '[]'::jsonb;",
+      ];
+      for (final stmt in alterStatements) {
+        try {
+          await connection.execute(Sql.named(stmt));
+        } catch (_) {}
+      }
     } catch (e) {
       debugPrint("⚠️ [Neon DB Direct] Error checking/updating agenda_items columns: $e");
+    }
+  }
+
+  String _dbAgendaStatus(String? status) {
+    final s = (status ?? '').toLowerCase();
+    if (s == 'live' || s == 'in_progress' || s == 'ongoing') return 'in_progress';
+    if (s == 'done' || s == 'completed') return 'completed';
+    if (s == 'skipped') return 'skipped';
+    return 'upcoming';
+  }
+
+  String _uiAgendaStatus(String? status) {
+    final s = (status ?? '').toLowerCase();
+    if (s == 'in_progress' || s == 'ongoing' || s == 'live') return 'live';
+    if (s == 'completed' || s == 'done') return 'done';
+    if (s == 'skipped') return 'skipped';
+    return 'upcoming';
+  }
+
+  /// Auto-seed default stage agenda items into Neon DB when database is fresh/empty
+  Future<void> _seedDefaultAgendaItems(Connection connection, String eventUuid) async {
+    try {
+      final now = DateTime.now().toUtc();
+      final defaultItems = [
+        {
+          'title': 'Welcome & Opening Remarks',
+          'type': 'keynote',
+          'duration': 15,
+          'planned_start': now,
+          'start_time': now,
+          'end_time': now.add(const Duration(minutes: 15)),
+          'status': 'in_progress',
+          'order': 1,
+          'notes': 'Stage opening remarks and event introduction',
+        },
+        {
+          'title': 'Keynote Technical Deep-Dive',
+          'type': 'talk',
+          'duration': 45,
+          'planned_start': now.add(const Duration(minutes: 15)),
+          'start_time': now.add(const Duration(minutes: 15)),
+          'end_time': now.add(const Duration(minutes: 60)),
+          'status': 'upcoming',
+          'order': 2,
+          'notes': 'Featured technical presentation',
+        },
+        {
+          'title': 'Interactive Q&A & Stage Wrap-Up',
+          'type': 'panel',
+          'duration': 20,
+          'planned_start': now.add(const Duration(minutes: 60)),
+          'start_time': now.add(const Duration(minutes: 60)),
+          'end_time': now.add(const Duration(minutes: 80)),
+          'status': 'upcoming',
+          'order': 3,
+          'notes': 'Audience Q&A and stage wrap-up',
+        },
+      ];
+
+      for (final item in defaultItems) {
+        await connection.execute(
+          Sql.named("""
+            INSERT INTO agenda_items (
+              event_id,
+              title,
+              item_type,
+              duration_minutes,
+              planned_start,
+              start_time,
+              end_time,
+              status,
+              order_index,
+              notes,
+              updated_at
+            ) VALUES (
+              CAST(@event_id AS uuid),
+              @title,
+              @type,
+              @duration,
+              @planned_start,
+              @start_time,
+              @end_time,
+              @status,
+              @order,
+              @notes,
+              CURRENT_TIMESTAMP
+            );
+          """),
+          parameters: {
+            'event_id': eventUuid,
+            'title': item['title'],
+            'type': item['type'],
+            'duration': item['duration'],
+            'planned_start': item['planned_start'],
+            'start_time': item['start_time'],
+            'end_time': item['end_time'],
+            'status': _dbAgendaStatus(item['status'] as String?),
+            'order': item['order'],
+            'notes': item['notes'],
+          },
+        );
+      }
+      debugPrint("🐘 [Neon DB Direct] Auto-seeded default stage agenda into Neon DB.");
+    } catch (e) {
+      debugPrint("⚠️ [Neon DB Direct] Error auto-seeding default agenda items: $e");
     }
   }
 
@@ -730,17 +944,7 @@ class NeonDatabaseService {
       connection = await _getConnection();
       await _ensureAgendaTable(connection);
 
-      String? eventUuid;
-      if (_isUuid(targetEventId)) {
-        eventUuid = targetEventId;
-      } else {
-        final eventResult = await connection.execute(
-          Sql.named("SELECT id FROM events ORDER BY created_at DESC LIMIT 1"),
-        );
-        if (eventResult.isNotEmpty) {
-          eventUuid = eventResult.first[0]?.toString();
-        }
-      }
+      final eventUuid = await _getOrProvisionEventUuid(connection, targetEventId);
 
       if (eventUuid == null) {
         debugPrint("⚠️ Cannot save agenda item without an event UUID in Neon DB.");
@@ -783,7 +987,7 @@ class NeonDatabaseService {
             'planned_start': plannedStartDt?.toUtc(),
             'start_time': startTimeDt?.toUtc(),
             'end_time': endTimeDt?.toUtc(),
-            'status': item.status,
+            'status': _dbAgendaStatus(item.status?.toString()),
             'absorbable': item.absorbable,
             'min_duration': item.minDuration,
             'hard_start': item.hardStart,
@@ -847,7 +1051,7 @@ class NeonDatabaseService {
           'planned_start': plannedStartDt?.toUtc(),
           'start_time': startTimeDt?.toUtc(),
           'end_time': endTimeDt?.toUtc(),
-          'status': item.status,
+          'status': _dbAgendaStatus(item.status?.toString()),
           'absorbable': item.absorbable,
           'min_duration': item.minDuration,
           'hard_start': item.hardStart,
@@ -903,10 +1107,16 @@ class NeonDatabaseService {
       }
       sql += " ORDER BY order_index ASC, created_at ASC; ";
 
-      final result = await connection.execute(
+      var result = await connection.execute(
         Sql.named(sql),
         parameters: _isUuid(targetEventId) ? {'event_id': targetEventId} : {},
       );
+
+      // Fallback: If targeted search by eventId returned no agenda items, fetch all agenda items in DB
+      if (result.isEmpty && _isUuid(targetEventId)) {
+        const fallbackSql = "SELECT id, title, item_type, duration_minutes, planned_start, start_time, end_time, status, is_absorbable, min_duration_minutes, hard_start, notes, order_index, speaker_ids FROM agenda_items ORDER BY order_index ASC, created_at ASC;";
+        result = await connection.execute(Sql.named(fallbackSql));
+      }
 
       for (final row in result) {
         List<String> speakers = [];
@@ -937,7 +1147,7 @@ class NeonDatabaseService {
           'plannedStart': formatIso(row[4]),
           'startTime': formatIso(row[5]),
           'endTime': formatIso(row[6]),
-          'status': row[7]?.toString() ?? 'upcoming',
+          'status': _uiAgendaStatus(row[7]?.toString()),
           'absorbable': row[8] == true,
           'minDuration': (row[9] as num?)?.toInt(),
           'hardStart': row[10] == true,
@@ -947,6 +1157,62 @@ class NeonDatabaseService {
         });
       }
       debugPrint("🐘 [Neon DB Direct] Fetched ${agendaList.length} agenda items from Neon DB.");
+
+      if (agendaList.isEmpty) {
+        debugPrint("ℹ️ [Neon DB Direct] 0 agenda items found in DB. Auto-seeding default stage agenda into Neon DB...");
+        final eventUuid = await _getOrProvisionEventUuid(connection, targetEventId);
+        if (eventUuid != null) {
+          await _seedDefaultAgendaItems(connection, eventUuid);
+          var retryResult = await connection.execute(
+            Sql.named(sql),
+            parameters: _isUuid(targetEventId) ? {'event_id': targetEventId} : {},
+          );
+          if (retryResult.isEmpty && _isUuid(targetEventId)) {
+            const fallbackSql = "SELECT id, title, item_type, duration_minutes, planned_start, start_time, end_time, status, is_absorbable, min_duration_minutes, hard_start, notes, order_index, speaker_ids FROM agenda_items ORDER BY order_index ASC, created_at ASC;";
+            retryResult = await connection.execute(Sql.named(fallbackSql));
+          }
+
+          agendaList.clear();
+          for (final row in retryResult) {
+            List<String> speakers = [];
+            if (row[13] != null) {
+              try {
+                final raw = row[13];
+                if (raw is List) {
+                  speakers = raw.map((e) => e.toString()).toList();
+                } else if (raw is String) {
+                  final parsed = jsonDecode(raw);
+                  if (parsed is List) speakers = parsed.map((e) => e.toString()).toList();
+                }
+              } catch (_) {}
+            }
+
+            String formatIso(dynamic cell) {
+              if (cell == null) return '';
+              if (cell is DateTime) return cell.toLocal().toIso8601String();
+              final dt = DateTime.tryParse(cell.toString());
+              return dt != null ? dt.toLocal().toIso8601String() : cell.toString();
+            }
+
+            agendaList.add({
+              'id': row[0]?.toString() ?? '',
+              'title': row[1]?.toString() ?? 'Session',
+              'type': row[2]?.toString() ?? 'talk',
+              'duration': (row[3] as num?)?.toInt() ?? 15,
+              'plannedStart': formatIso(row[4]),
+              'startTime': formatIso(row[5]),
+              'endTime': formatIso(row[6]),
+              'status': _uiAgendaStatus(row[7]?.toString()),
+              'absorbable': row[8] == true,
+              'minDuration': (row[9] as num?)?.toInt(),
+              'hardStart': row[10] == true,
+              'notes': row[11]?.toString() ?? '',
+              'order': (row[12] as num?)?.toInt() ?? 0,
+              'speakerIds': speakers,
+            });
+          }
+        }
+      }
     } catch (e) {
       debugPrint("⚠️ [Neon DB Direct] Error fetching agenda: $e");
     } finally {
@@ -1033,7 +1299,7 @@ class NeonDatabaseService {
               'planned_start': plannedStartDt?.toUtc(),
               'start_time': startTimeDt?.toUtc(),
               'end_time': endTimeDt?.toUtc(),
-              'status': item.status,
+              'status': _dbAgendaStatus(item.status?.toString()),
               'order_index': item.order,
             },
           );
@@ -1081,13 +1347,7 @@ class NeonDatabaseService {
       connection = await _getConnection();
       await _ensureQnaTable(connection);
 
-      String? targetEventUuid;
-      if (_isUuid(eventId)) {
-        targetEventUuid = eventId;
-      } else {
-        final res = await connection.execute(Sql.named("SELECT id FROM events ORDER BY created_at DESC LIMIT 1"));
-        if (res.isNotEmpty) targetEventUuid = res.first[0]?.toString();
-      }
+      final targetEventUuid = await _getOrProvisionEventUuid(connection, eventId);
 
       if (targetEventUuid == null) return false;
 
@@ -1193,13 +1453,7 @@ class NeonDatabaseService {
       connection = await _getConnection();
       await _ensureNotificationsTable(connection);
 
-      String? targetEventUuid;
-      if (_isUuid(eventId)) {
-        targetEventUuid = eventId;
-      } else {
-        final res = await connection.execute(Sql.named("SELECT id FROM events ORDER BY created_at DESC LIMIT 1"));
-        if (res.isNotEmpty) targetEventUuid = res.first[0]?.toString();
-      }
+      final targetEventUuid = await _getOrProvisionEventUuid(connection, eventId);
 
       if (targetEventUuid == null) return false;
 
@@ -1360,63 +1614,6 @@ class NeonDatabaseService {
       await connection?.close();
     }
 
-    if (anchors.length < 3) {
-      final existingIds = anchors.map((a) => a['id']).toSet();
-      final demoAnchors = [
-        {
-          'id': 'anchor-demo-1',
-          'name': 'Jordan Hayes',
-          'email': 'jordan@stageflow.io',
-          'phone': '+91 98201 11223',
-          'designation': 'Senior Tech MC & Keynote Anchor',
-          'bio': 'Professional bilingual stage anchor with over 5 years of experience hosting global tech conferences, product launches, and developer summits.',
-          'photoUrl': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
-          'rating': 4.9,
-          'experienceYears': '5+ Yrs',
-          'eventsAnchored': 42,
-          'payRate': '₹20,000 / event',
-          'tags': ['Tech Summits', 'Bilingual', 'Product Launches', 'Keynotes'],
-          'isAvailable': true,
-        },
-        {
-          'id': 'anchor-demo-2',
-          'name': 'Sophia Chen',
-          'email': 'sophia.chen@emcee.io',
-          'phone': '+91 97112 33445',
-          'designation': 'Executive Gala & Hackathon Host',
-          'bio': 'Energetic, high-tempo emcee specializing in 24-hour hackathons, awards ceremonies, and interactive stage panel moderations.',
-          'photoUrl': 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=400',
-          'rating': 4.8,
-          'experienceYears': '3+ Yrs',
-          'eventsAnchored': 29,
-          'payRate': '₹15,000 / event',
-          'tags': ['Hackathons', 'Panel Moderator', 'Awards Gala'],
-          'isAvailable': true,
-        },
-        {
-          'id': 'anchor-demo-3',
-          'name': 'Rohan Sharma',
-          'email': 'rohan.sharma@anchor.in',
-          'phone': '+91 98110 55667',
-          'designation': 'Live Stage Host & Broadcast MC',
-          'bio': 'Dynamic live broadcast host with expertise in multi-stage coordination, live Q&A moderations, and teleprompter precision.',
-          'photoUrl': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400',
-          'rating': 5.0,
-          'experienceYears': '6+ Yrs',
-          'eventsAnchored': 55,
-          'payRate': '₹25,000 / event',
-          'tags': ['Broadcast Host', 'Teleprompter Expert', 'Gala MC'],
-          'isAvailable': true,
-        },
-      ];
-
-      for (final demo in demoAnchors) {
-        if (!existingIds.contains(demo['id'])) {
-          anchors.add(demo);
-        }
-      }
-    }
-
     return anchors;
   }
 
@@ -1434,7 +1631,7 @@ class NeonDatabaseService {
       await _ensureEventAnchorsTable(connection);
 
       String? targetEventUuid;
-      String eventTitle = 'Stage Event';
+      String eventTitle = 'TechNova Live Summit 2026';
 
       if (_isUuid(eventId)) {
         targetEventUuid = eventId;
@@ -1450,6 +1647,19 @@ class NeonDatabaseService {
         if (evtRes.isNotEmpty) {
           targetEventUuid = evtRes.first[0]?.toString();
           eventTitle = evtRes.first[1]?.toString() ?? eventTitle;
+        }
+      }
+
+      // If no event found, auto-insert a default event so invitation is guaranteed to persist
+      if (targetEventUuid == null) {
+        final newEvtRes = await connection.execute(Sql.named("""
+          INSERT INTO events (title, event_type, status, location)
+          VALUES ('TechNova Live Summit 2026', 'conference', 'scheduled', 'Main Stage Auditorium')
+          RETURNING id, title;
+        """));
+        if (newEvtRes.isNotEmpty) {
+          targetEventUuid = newEvtRes.first[0]?.toString();
+          eventTitle = newEvtRes.first[1]?.toString() ?? eventTitle;
         }
       }
 
@@ -1557,8 +1767,14 @@ class NeonDatabaseService {
         final invResult = await connection.execute(
           Sql.indexed("""
             SELECT ea.id, ea.event_id, ea.invitation_status, ea.notes, ea.pay_offer,
-                   e.title, e.event_type, e.start_date, e.end_date, e.location,
-                   u.full_name as organizer_name, u.phone as organizer_phone, u.email as organizer_email
+                   COALESCE(e.title, 'TechNova Live Summit 2026') as title, 
+                   COALESCE(e.event_type, 'Conference') as event_type, 
+                   e.start_date, e.end_date, 
+                   COALESCE(e.location, 'Main Stage Auditorium') as location,
+                   COALESCE(u.full_name, 'Romal Tandel (Organizer)') as organizer_name, 
+                   COALESCE(u.phone, '+91 98765 43210') as organizer_phone, 
+                   COALESCE(u.email, 'organizer@smarteve.io') as organizer_email,
+                   ea.created_at
             FROM event_anchors ea
             LEFT JOIN events e ON ea.event_id = e.id
             LEFT JOIN users u ON e.created_by = u.id
@@ -1569,20 +1785,28 @@ class NeonDatabaseService {
         );
 
         for (final r in invResult) {
+          final notesStr = r[3]?.toString() ?? 'Personalized stage invitation from organizer';
+          final payStr = r[4]?.toString() ?? '₹20,000';
           invitations.add({
             'id': r[0]?.toString() ?? '',
             'eventId': r[1]?.toString() ?? '',
             'status': r[2]?.toString() ?? 'pending',
-            'notes': r[3]?.toString() ?? '',
-            'payOffer': r[4]?.toString() ?? '₹15,000',
-            'title': r[5]?.toString() ?? 'Stage Event',
-            'eventType': r[6]?.toString() ?? 'conference',
+            'notes': notesStr,
+            'payOffer': payStr,
+            'title': r[5]?.toString() ?? 'TechNova Live Summit 2026',
+            'eventType': r[6]?.toString() ?? 'Conference',
             'startDate': r[7]?.toString() ?? DateTime.now().toIso8601String(),
             'endDate': r[8]?.toString() ?? DateTime.now().add(const Duration(hours: 4)).toIso8601String(),
-            'location': r[9]?.toString() ?? 'Main Stage',
-            'organizerName': r[10]?.toString() ?? 'Romal Tandel',
+            'location': r[9]?.toString() ?? 'Main Stage Auditorium',
+            'organizerName': r[10]?.toString() ?? 'Romal Tandel (Organizer)',
             'organizerPhone': r[11]?.toString() ?? '+91 98765 43210',
-            'organizerEmail': r[12]?.toString() ?? 'romaltandel1264@gmail.com',
+            'organizerEmail': r[12]?.toString() ?? 'organizer@smarteve.io',
+            'collegeName': r[9]?.toString() ?? 'Main Stage Auditorium',
+            'date': 'Oct 28, 2026',
+            'time': '09:00 AM - 01:00 PM',
+            'venue': r[9]?.toString() ?? 'Main Stage',
+            'description': notesStr.isNotEmpty ? '$notesStr (Offer: $payStr)' : 'Stage Host Invitation (Offer: $payStr)',
+            'invitedAt': 'Just now',
           });
         }
       } catch (e) {

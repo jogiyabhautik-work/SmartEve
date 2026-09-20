@@ -543,13 +543,6 @@ class AuthService {
   }) async {
     final cleanEmail = email.trim().toLowerCase();
 
-    // Check quick demo shortcuts
-    if (cleanEmail == 'alex@technova.io') {
-      return await demoLogin('organizer');
-    }
-    if (cleanEmail == 'jordan@stageflow.io') {
-      return await demoLogin('anchor');
-    }
 
     try {
       // 1. Authenticate with Firebase Auth first
@@ -720,25 +713,29 @@ class AuthService {
     }
   }
 
-  /// One-Tap Quick Demo Login for instant testing
+  /// Quick Role Login with active Neon DB user persistence
   Future<AppUser> demoLogin(String role) async {
-    if (role.toLowerCase() == 'anchor') {
-      _currentAppUser = AppUser(
-        uid: 'user-anchor-1',
-        email: 'jordan@stageflow.io',
-        fullName: 'Jordan Hayes',
-        role: 'anchor',
-        neonId: 'demo-anchor-jordan',
+    final cleanRole = role.toLowerCase() == 'anchor' ? 'anchor' : 'organizer';
+    final email = cleanRole == 'anchor' ? 'anchor@smart-eve.io' : 'organizer@smart-eve.io';
+    final name = cleanRole == 'anchor' ? 'Stage Anchor' : 'Event Organizer';
+
+    String? neonId;
+    try {
+      neonId = await NeonDatabaseService().saveUser(
+        firebaseUid: 'sys_${cleanRole}_user',
+        email: email,
+        fullName: name,
+        role: cleanRole,
       );
-    } else {
-      _currentAppUser = AppUser(
-        uid: 'user-organizer-1',
-        email: 'alex@technova.io',
-        fullName: 'Alex Rivera',
-        role: 'organizer',
-        neonId: 'demo-organizer-alex',
-      );
-    }
+    } catch (_) {}
+
+    _currentAppUser = AppUser(
+      uid: 'sys_${cleanRole}_user',
+      email: email,
+      fullName: name,
+      role: cleanRole,
+      neonId: neonId,
+    );
     await _persistSession(_currentAppUser!);
     return _currentAppUser!;
   }

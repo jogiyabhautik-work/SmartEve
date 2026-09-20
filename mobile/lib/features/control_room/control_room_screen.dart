@@ -33,68 +33,126 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (ctx) {
         return Padding(
-          padding: EdgeInsets.only(left: 20, right: 20, top: 24, bottom: MediaQuery.of(ctx).viewInsets.bottom + 24),
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 24,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Icon(
-                    isPositive ? Icons.add_alarm_rounded : Icons.fast_forward_rounded,
-                    color: isPositive ? AppTheme.warningAmber : AppTheme.liveGreen,
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: (isPositive ? AppTheme.warningAmber : AppTheme.liveGreen).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      isPositive ? Icons.add_alarm_rounded : Icons.fast_forward_rounded,
+                      color: isPositive ? AppTheme.warningAmber : AppTheme.liveGreen,
+                      size: 24,
+                    ),
                   ),
-                  const SizedBox(width: 10),
-                  Text(
-                    isPositive ? 'Inject Schedule Shift (Delay)' : 'Inject Time Pull (Catch Up)',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isPositive ? 'Inject Schedule Shift (Delay)' : 'Inject Time Pull (Catch Up)',
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          isPositive ? 'Add extra time to downstream sessions' : 'Reduce break times to regain schedule',
+                          style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               const Text(
                 'Downstream upcoming session timings will automatically reflow in Neon DB. Buffer break sessions will absorb shift up to their minimum duration.',
-                style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.3),
+                style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.4),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               Row(
                 children: [
-                  const Text('SHIFT MINUTES:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1, color: AppTheme.textSecondary)),
-                  const SizedBox(width: 12),
+                  const Text(
+                    'SHIFT MINUTES:',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
                   SizedBox(
-                    width: 100,
+                    width: 110,
                     child: TextFormField(
                       controller: _customDelayController,
                       keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.primaryBlue),
                       decoration: InputDecoration(
                         isDense: true,
                         filled: true,
                         fillColor: AppTheme.surfaceLight,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: AppTheme.border),
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
-              const Text('REASON FOR SHIFT (OPTIONAL):', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1, color: AppTheme.textSecondary)),
+              const SizedBox(height: 16),
+              const Text(
+                'REASON FOR SHIFT (OPTIONAL):',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                  color: AppTheme.textSecondary,
+                ),
+              ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _delayReasonController,
                 decoration: InputDecoration(
                   hintText: 'e.g. Keynote audience Q&A extended',
+                  hintStyle: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
                   filled: true,
                   fillColor: AppTheme.surfaceLight,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: AppTheme.border),
+                  ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
-                height: 48,
+                height: 50,
                 child: ElevatedButton.icon(
                   onPressed: () async {
                     final mins = int.tryParse(_customDelayController.text.trim()) ?? 5;
@@ -120,10 +178,11 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
                     }
                   },
                   icon: const Icon(Icons.bolt_rounded, color: Colors.white),
-                  label: const Text('APPLY REFLOW & RECALCULATE', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                  label: const Text('APPLY REFLOW & RECALCULATE', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isPositive ? AppTheme.primaryBlue : AppTheme.liveGreen,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    elevation: 2,
                   ),
                 ),
               ),
@@ -154,34 +213,62 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.psychology_rounded, color: AppTheme.primaryPurple, size: 24),
-                      SizedBox(width: 10),
-                      Text('Quad-AI Stage Script Studio', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryPurple.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.auto_awesome_rounded, color: AppTheme.primaryPurple, size: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Stage AI Script Studio', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+                            Text('Generates instant teleprompter introductions and announcements.', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  const Text('Generates instant teleprompter introductions and announcements with quad-provider fallback.', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
                   Row(
                     children: [
                       ChoiceChip(
                         label: const Text('Speaker Intro'),
                         selected: selectedType == 'intro',
+                        selectedColor: AppTheme.primaryPurple.withValues(alpha: 0.2),
+                        labelStyle: TextStyle(
+                          color: selectedType == 'intro' ? AppTheme.primaryPurple : AppTheme.textSecondary,
+                          fontWeight: selectedType == 'intro' ? FontWeight.bold : FontWeight.normal,
+                        ),
                         onSelected: (_) => setModalState(() => selectedType = 'intro'),
                       ),
                       const SizedBox(width: 8),
                       ChoiceChip(
                         label: const Text('Delay Notice'),
                         selected: selectedType == 'delay',
+                        selectedColor: AppTheme.warningAmber.withValues(alpha: 0.2),
+                        labelStyle: TextStyle(
+                          color: selectedType == 'delay' ? AppTheme.warningAmber : AppTheme.textSecondary,
+                          fontWeight: selectedType == 'delay' ? FontWeight.bold : FontWeight.normal,
+                        ),
                         onSelected: (_) => setModalState(() => selectedType = 'delay'),
                       ),
                       const SizedBox(width: 8),
                       ChoiceChip(
                         label: const Text('Session Wrap-up'),
                         selected: selectedType == 'wrapup',
+                        selectedColor: AppTheme.primaryBlue.withValues(alpha: 0.2),
+                        labelStyle: TextStyle(
+                          color: selectedType == 'wrapup' ? AppTheme.primaryBlue : AppTheme.textSecondary,
+                          fontWeight: selectedType == 'wrapup' ? FontWeight.bold : FontWeight.normal,
+                        ),
                         onSelected: (_) => setModalState(() => selectedType = 'wrapup'),
                       ),
                     ],
@@ -190,10 +277,10 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
 
                   if (script != null) ...[
                     Container(
-                      padding: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: AppTheme.surfaceLight,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
                         border: Border.all(color: AppTheme.primaryPurple.withValues(alpha: 0.3)),
                       ),
                       child: Column(
@@ -202,12 +289,12 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(script.provider ?? 'Quad-AI Engine', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primaryPurple)),
-                              const Icon(Icons.check_circle_rounded, size: 14, color: AppTheme.liveGreen),
+                              Text(script.provider ?? 'Quad-AI Engine', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryPurple)),
+                              const Icon(Icons.check_circle_rounded, size: 16, color: AppTheme.liveGreen),
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Text(script.text, style: const TextStyle(fontSize: 13, color: AppTheme.textPrimary, height: 1.4)),
+                          Text(script.text, style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary, height: 1.4)),
                         ],
                       ),
                     ),
@@ -216,17 +303,18 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
 
                   SizedBox(
                     width: double.infinity,
-                    height: 48,
+                    height: 50,
                     child: ElevatedButton.icon(
                       onPressed: () async {
                         await provider.generateAiScript(selectedType);
                         setModalState(() {});
                       },
                       icon: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
-                      label: const Text('GENERATE AI PROSE', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                      label: const Text('GENERATE AI PROSE', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryPurple,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        elevation: 2,
                       ),
                     ),
                   ),
@@ -236,45 +324,6 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
           },
         );
       },
-    );
-  }
-
-  void _showAnnouncementDialog(BuildContext context) {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.surface,
-        title: const Text('Broadcast Stage Announcement', style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold)),
-        content: TextField(
-          controller: controller,
-          maxLines: 3,
-          style: const TextStyle(color: AppTheme.textPrimary),
-          decoration: const InputDecoration(
-            hintText: 'e.g. Please take your seats, next keynote starts in 2 minutes.',
-            hintStyle: TextStyle(color: AppTheme.textMuted),
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('CANCEL', style: TextStyle(color: AppTheme.textMuted)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (controller.text.trim().isNotEmpty) {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('📣 Stage announcement broadcasted to all stage displays!'), backgroundColor: AppTheme.primaryBlue),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
-            child: const Text('BROADCAST', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
     );
   }
 
@@ -293,8 +342,8 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
           padding: EdgeInsets.only(
             left: 20,
             right: 20,
-            top: 20,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+            top: 24,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -303,11 +352,18 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.campaign_rounded, color: AppTheme.warningAmber, size: 24),
-                      SizedBox(width: 8),
-                      Text(
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.warningAmber.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.campaign_rounded, color: AppTheme.warningAmber, size: 24),
+                      ),
+                      const SizedBox(width: 10),
+                      const Text(
                         'Broadcast Announcement',
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
                       ),
@@ -319,23 +375,24 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               TextField(
                 controller: textController,
                 maxLines: 3,
-                style: const TextStyle(color: AppTheme.textPrimary),
+                style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14),
                 decoration: InputDecoration(
                   hintText: 'Type announcement (e.g. "Tea break extended by 10 mins")...',
-                  hintStyle: const TextStyle(color: AppTheme.textMuted),
+                  hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
                   filled: true,
-                  fillColor: AppTheme.background,
+                  fillColor: AppTheme.surfaceLight,
+                  contentPadding: const EdgeInsets.all(14),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(color: AppTheme.border),
                   ),
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
               ElevatedButton.icon(
                 onPressed: () async {
                   final msg = textController.text.trim();
@@ -352,12 +409,13 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
                     );
                   }
                 },
-                icon: const Icon(Icons.send_rounded, color: Colors.black),
-                label: const Text('BROADCAST TO STAGE & ATTENDEES', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                icon: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
+                label: const Text('BROADCAST TO STAGE & ATTENDEES', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.warningAmber,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 2,
                 ),
               ),
             ],
@@ -370,36 +428,71 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.lightBackground,
       appBar: AppBar(
-        title: const Text('Stage Pilot Control Room', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: AppTheme.surface,
+        toolbarHeight: 68,
+        leading: IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceLight,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppTheme.border),
+            ),
+            child: const Icon(Icons.arrow_back_rounded, color: AppTheme.textPrimary, size: 18),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Row(
+          children: [
+            Image.asset(
+              'assets/trans_icon.png',
+              width: 28,
+              height: 28,
+              errorBuilder: (_, __, ___) => Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.tune_rounded, color: AppTheme.primaryBlue, size: 18),
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Stage Control Room',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: AppTheme.textPrimary),
+                ),
+                Text(
+                  'SmartEve Live Operations & Reflow',
+                  style: TextStyle(fontSize: 11, color: AppTheme.textSecondary, fontWeight: FontWeight.normal),
+                ),
+              ],
+            ),
+          ],
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.campaign_rounded, color: AppTheme.warningAmber),
-            tooltip: 'Broadcast Stage Announcement',
+            icon: Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: AppTheme.warningAmber.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppTheme.warningAmber.withValues(alpha: 0.25)),
+              ),
+              child: const Icon(Icons.campaign_rounded, color: AppTheme.warningAmber, size: 18),
+            ),
+            tooltip: 'Broadcast Announcement',
             onPressed: () => _showBroadcastDialog(context),
           ),
-          IconButton(
-            icon: const Icon(Icons.format_list_bulleted_rounded, color: AppTheme.primaryBlue),
-            tooltip: 'View Full Agenda',
-            onPressed: () {
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AgendaScreen()));
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.cast_connected_rounded, color: AppTheme.liveGreen),
-            tooltip: 'Stage Display View',
-            onPressed: () {
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const StageDisplayScreen()));
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.mic_rounded, color: AppTheme.primaryPurple),
-            tooltip: 'Anchor Teleprompter',
-            onPressed: () {
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AnchorTeleprompterScreen()));
-            },
-          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Consumer<EventProvider>(
@@ -417,97 +510,201 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
               .fold<int>(0, (sum, it) => sum + (it.duration - (it.minDuration ?? 5)).clamp(0, 99));
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Event Header & Status Banner
+                // 1. HERO EVENT BANNER (Sleek Gradient Highlight)
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF2563EB), Color(0xFF7C5CFC)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF2563EB).withValues(alpha: 0.3),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  isLive ? Icons.sensors_rounded : Icons.pause_circle_filled_rounded,
+                                  color: Colors.white,
+                                  size: 14,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  isLive ? 'STAGE LIVE' : 'STAGE READY',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'Code: ${event?.joinCode ?? "TN26"}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        event?.name ?? 'TechNova Live Stage',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on_rounded, color: Colors.white70, size: 16),
+                          const SizedBox(width: 4),
+                          Text(
+                            event?.venue ?? 'Main Auditorium Stage A',
+                            style: const TextStyle(fontSize: 13, color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // 2. QUICK ACTION SHORTCUT BAR
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
                     color: AppTheme.surface,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: AppTheme.border),
                   ),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              event?.name ?? 'No Event Selected',
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${event?.venue ?? "Main Stage"} • Join Code: ${event?.joinCode ?? "TN26"}',
-                              style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-                            ),
-                          ],
-                        ),
+                      _buildHeaderShortcut(
+                        context,
+                        icon: Icons.cast_connected_rounded,
+                        label: 'Projector',
+                        color: AppTheme.liveGreen,
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StageDisplayScreen())),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: (isLive ? AppTheme.liveGreen : AppTheme.warningAmber).withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: isLive ? AppTheme.liveGreen : AppTheme.warningAmber),
-                        ),
-                        child: Text(
-                          isLive ? 'STAGE LIVE' : 'STAGE READY',
-                          style: TextStyle(
-                            color: isLive ? AppTheme.liveGreen : AppTheme.warningAmber,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
-                          ),
-                        ),
+                      _buildHeaderShortcut(
+                        context,
+                        icon: Icons.mic_rounded,
+                        label: 'Teleprompter',
+                        color: AppTheme.primaryPurple,
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AnchorTeleprompterScreen())),
+                      ),
+                      _buildHeaderShortcut(
+                        context,
+                        icon: Icons.calendar_today_rounded,
+                        label: 'Full Agenda',
+                        color: AppTheme.primaryBlue,
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AgendaScreen())),
+                      ),
+                      _buildHeaderShortcut(
+                        context,
+                        icon: Icons.campaign_rounded,
+                        label: 'Broadcast',
+                        color: AppTheme.warningAmber,
+                        onTap: () => _showBroadcastDialog(context),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 16),
 
-                // Start Event Banner (if not live yet)
+                // 3. START STAGE BANNER (if stage not started yet)
                 if (!isLive) ...[
                   SizedBox(
                     width: double.infinity,
-                    height: 50,
+                    height: 52,
                     child: ElevatedButton.icon(
-                      onPressed: _isProcessing ? null : () async {
-                        setState(() => _isProcessing = true);
-                        await provider.startEvent();
-                        setState(() => _isProcessing = false);
-                      },
-                      icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
-                      label: const Text('START STAGE EVENT & TIMELINE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white)),
+                      onPressed: _isProcessing
+                          ? null
+                          : () async {
+                              setState(() => _isProcessing = true);
+                              await provider.startEvent();
+                              setState(() => _isProcessing = false);
+                            },
+                      icon: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 24),
+                      label: const Text('START STAGE TIMELINE & LIVE SYNC', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.liveGreen,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        elevation: 3,
                       ),
                     ),
                   ),
                   const SizedBox(height: 16),
                 ],
 
-                // Absorbable Buffer Status Banner
+                // 4. ABSORBABLE BREAK BUFFER BANNER
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     color: AppTheme.primaryBlue.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.25)),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.2)),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.shield_rounded, size: 18, color: AppTheme.primaryBlue),
-                      const SizedBox(width: 10),
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryBlue.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.shield_rounded, size: 18, color: AppTheme.primaryBlue),
+                      ),
+                      const SizedBox(width: 12),
                       Expanded(
-                        child: Text(
-                          'Absorbable Break Buffer: $absorbableMins mins available across upcoming breaks.',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('REFLOW BUFFER PROTECTION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue, letterSpacing: 1)),
+                            Text(
+                              '$absorbableMins mins available across upcoming breaks to absorb delays.',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -515,14 +712,14 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Main Session Countdown Card
+                // 5. MAIN DIGITAL COUNTDOWN CONTROL UNIT
                 Container(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(22),
                   decoration: BoxDecoration(
                     color: AppTheme.surface,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isOvertime ? AppTheme.dangerRose : AppTheme.primaryBlue.withValues(alpha: 0.4),
+                      color: isOvertime ? AppTheme.dangerRose : AppTheme.primaryBlue.withValues(alpha: 0.3),
                       width: 1.5,
                     ),
                     boxShadow: [
@@ -543,16 +740,17 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
                             style: TextStyle(
                               fontSize: 11,
                               letterSpacing: 1.5,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.bold,
                               color: AppTheme.textSecondary,
                             ),
                           ),
                           if (isOvertime)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: AppTheme.dangerRose.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(6),
+                                color: AppTheme.dangerRose.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: AppTheme.dangerRose),
                               ),
                               child: const Text(
                                 'OVERTIME',
@@ -560,16 +758,17 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
                                   color: AppTheme.dangerRose,
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
+                                  letterSpacing: 1,
                                 ),
                               ),
                             ),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                       Text(
                         provider.formattedCountdown,
                         style: TextStyle(
-                          fontSize: 54,
+                          fontSize: 52,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 2,
                           color: isOvertime ? AppTheme.dangerRose : AppTheme.primaryBlue,
@@ -577,10 +776,10 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
                       ),
                       const SizedBox(height: 14),
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(8),
                         child: LinearProgressIndicator(
                           value: provider.progressFraction,
-                          minHeight: 8,
+                          minHeight: 10,
                           backgroundColor: AppTheme.surfaceLight,
                           valueColor: AlwaysStoppedAnimation<Color>(
                             isOvertime ? AppTheme.dangerRose : AppTheme.primaryBlue,
@@ -592,20 +791,27 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
                         currentSession?.title ?? 'No active session running',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          fontSize: 17,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: AppTheme.textPrimary,
                         ),
                       ),
                       if (currentSpeaker != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          '${currentSpeaker.name} • ${currentSpeaker.organization}',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: AppTheme.textSecondary,
-                          ),
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.person_rounded, size: 15, color: AppTheme.primaryBlue),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${currentSpeaker.name} • ${currentSpeaker.organization}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppTheme.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ],
@@ -613,21 +819,30 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Delay Injection Controls Header
-                const Text(
-                  'REFLOW ENGINE & DELAY INJECTION',
-                  style: TextStyle(
-                    fontSize: 11,
-                    letterSpacing: 1.2,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textSecondary,
-                  ),
+                // 6. DELAY INJECTION CONTROL HEADER
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'SCHEDULE SHIFT & REFLOW',
+                      style: TextStyle(
+                        fontSize: 11,
+                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                    Text(
+                      'Auto-syncs Neon DB',
+                      style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 10),
                 Row(
                   children: [
                     Expanded(
-                      child: _buildActionButton(
+                      child: _buildShiftButton(
                         context,
                         label: '+15m Shift',
                         color: AppTheme.warningAmber,
@@ -635,9 +850,9 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
                         onPressed: () => _showDelayModal(context, 15),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Expanded(
-                      child: _buildActionButton(
+                      child: _buildShiftButton(
                         context,
                         label: '+5m Shift',
                         color: AppTheme.primaryBlue,
@@ -645,9 +860,9 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
                         onPressed: () => _showDelayModal(context, 5),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Expanded(
-                      child: _buildActionButton(
+                      child: _buildShiftButton(
                         context,
                         label: '-5m Pull',
                         color: AppTheme.liveGreen,
@@ -659,85 +874,72 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Session Advancement Controls
+                // 7. SESSION ADVANCEMENT ACTIONS
                 Row(
                   children: [
                     Expanded(
                       flex: 2,
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.skip_next_rounded, size: 20, color: Colors.white),
-                        label: const Text('COMPLETE & ADVANCE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryPurple,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      child: SizedBox(
+                        height: 50,
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.skip_next_rounded, size: 22, color: Colors.white),
+                          label: const Text('COMPLETE & ADVANCE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryPurple,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            elevation: 2,
+                          ),
+                          onPressed: _isProcessing
+                              ? null
+                              : () async {
+                                  setState(() => _isProcessing = true);
+                                  final ok = await provider.completeCurrentSession();
+                                  setState(() => _isProcessing = false);
+                                  if (ok && context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('✅ Session completed! Advanced to next live session.'), backgroundColor: AppTheme.liveGreen),
+                                    );
+                                  }
+                                },
                         ),
-                        onPressed: _isProcessing
-                            ? null
-                            : () async {
-                                setState(() => _isProcessing = true);
-                                final ok = await provider.completeCurrentSession();
-                                setState(() => _isProcessing = false);
-                                if (ok && context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('✅ Session completed! Advanced to next live session.'), backgroundColor: AppTheme.liveGreen),
-                                  );
-                                }
-                              },
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      flex: 1,
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.fast_forward_outlined, size: 18, color: AppTheme.textSecondary),
-                        label: const Text('SKIP', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.textSecondary)),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        onPressed: () async {
-                          await provider.skipCurrentSession();
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                // AI Script & Emergency Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.auto_awesome_rounded, color: AppTheme.primaryPurple, size: 18),
-                        label: const Text('AI Script Studio', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.primaryPurple)),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppTheme.primaryPurple),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        onPressed: () => _showAiScriptModal(context),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.campaign_rounded, color: AppTheme.primaryBlue, size: 18),
-                        label: const Text('Broadcast Alert', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.primaryBlue)),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppTheme.primaryBlue),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      flex: 1,
+                      child: SizedBox(
+                        height: 50,
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.fast_forward_outlined, size: 18, color: AppTheme.textSecondary),
+                          label: const Text('SKIP', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.textSecondary)),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppTheme.border),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          onPressed: () async {
+                            await provider.skipCurrentSession();
+                          },
                         ),
-                        onPressed: () => _showAnnouncementDialog(context),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
-                // Up Next Preview Card
+                // 8. AI SCRIPT STUDIO BANNER
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.auto_awesome_rounded, color: AppTheme.primaryPurple, size: 20),
+                  label: const Text('OPEN AI SCRIPT STUDIO', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.primaryPurple)),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: AppTheme.primaryPurple.withValues(alpha: 0.5)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  onPressed: () => _showAiScriptModal(context),
+                ),
+                const SizedBox(height: 24),
+
+                // 9. UP NEXT PREVIEW CARD
                 if (nextSession != null) ...[
                   const Text(
                     'UP NEXT ON STAGE',
@@ -748,7 +950,7 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
                       color: AppTheme.textSecondary,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -759,16 +961,17 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
                     child: Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(10),
+                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: nextSession.isBreak
                                 ? AppTheme.warningAmber.withValues(alpha: 0.15)
                                 : AppTheme.primaryBlue.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
                             nextSession.isBreak ? Icons.coffee_rounded : Icons.person_rounded,
                             color: nextSession.isBreak ? AppTheme.warningAmber : AppTheme.primaryBlue,
+                            size: 22,
                           ),
                         ),
                         const SizedBox(width: 14),
@@ -798,6 +1001,7 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 20),
                 ],
               ],
             ),
@@ -807,7 +1011,40 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
     );
   }
 
-  Widget _buildActionButton(
+  Widget _buildHeaderShortcut(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShiftButton(
     BuildContext context, {
     required String label,
     required Color color,
@@ -818,22 +1055,22 @@ class _ControlRoomScreenState extends State<ControlRoomScreen> {
       color: Colors.transparent,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withValues(alpha: 0.4)),
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
           ),
           child: Column(
             children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(height: 4),
+              Icon(icon, color: color, size: 22),
+              const SizedBox(height: 6),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                   color: color,
                 ),

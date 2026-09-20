@@ -21,14 +21,14 @@ class RoleSelectionScreen extends StatefulWidget {
 }
 
 class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
-  final TextEditingController _codeController = TextEditingController(text: AppConstants.demoJoinCode);
+  final TextEditingController _codeController = TextEditingController();
   StreamSubscription<RemoteMessage>? _notificationSubscription;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<EventProvider>().loadEvent(AppConstants.demoEventId);
+      context.read<EventProvider>().fetchOrganizerEvents();
     });
 
     _notificationSubscription = FirebaseService().onNotificationReceived.listen((message) {

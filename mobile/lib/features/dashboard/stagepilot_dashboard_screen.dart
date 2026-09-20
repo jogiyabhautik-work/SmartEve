@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../../core/theme/app_theme.dart';
+import '../../models/agenda_item_model.dart';
+import '../../providers/event_provider.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/widgets/smart_eve_bottom_nav.dart';
 import '../anchor/anchor_teleprompter_screen.dart';
@@ -94,20 +99,25 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
           // Logo & Brand Header
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2563EB),
-                  borderRadius: BorderRadius.circular(10),
+              Image.asset(
+                'assets/trans_icon.png',
+                width: 32,
+                height: 32,
+                errorBuilder: (_, __, ___) => Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryBlue,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.dashboard_customize_rounded, color: Colors.white, size: 20),
                 ),
-                child: const Icon(Icons.stars_rounded, color: Colors.white, size: 22),
               ),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'StagePilot AI',
+                    'SmartEve',
                     style: GoogleFonts.inter(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -115,7 +125,7 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
                     ),
                   ),
                   Text(
-                    'Smart Anchor & Stage Flow',
+                    "Your Event's Co-Pilot",
                     style: GoogleFonts.inter(
                       fontSize: 10,
                       color: AppSlateColors.slate400,
@@ -240,18 +250,33 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
       color: Colors.white,
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: const Color(0xFF2563EB),
-              borderRadius: BorderRadius.circular(8),
+          Image.asset(
+            'assets/trans_icon.png',
+            width: 28,
+            height: 28,
+            errorBuilder: (_, __, ___) => Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryBlue,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.dashboard_customize_rounded, color: Colors.white, size: 18),
             ),
-            child: const Icon(Icons.stars_rounded, color: Colors.white, size: 20),
           ),
           const SizedBox(width: 10),
-          Text(
-            'StagePilot AI',
-            style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold),
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'SmartEve',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+              ),
+              Text(
+                "Your Event's Co-Pilot",
+                style: TextStyle(fontSize: 10, color: AppTheme.textSecondary),
+              ),
+            ],
           ),
           const Spacer(),
           IconButton(
@@ -385,69 +410,23 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
   // 1 & 5: EVENT DASHBOARD VIEW
   // ==========================================
   Widget _buildEventDashboardView() {
-    final user = AuthService().currentAppUser;
-    final userName = (user != null && user.fullName.isNotEmpty) ? user.fullName : 'Organizer';
+    final provider = context.watch<EventProvider>();
+    final currentSession = provider.currentSession;
+    final nextSession = provider.nextSession;
+    final agendaList = provider.agenda;
+
+    final liveTitle = currentSession?.title ?? (agendaList.isNotEmpty ? agendaList.first.title : 'Live Stage Keynote');
+    final liveTime = currentSession != null
+        ? '${currentSession.startTime} - ${currentSession.endTime}'
+        : (agendaList.isNotEmpty ? '${agendaList.first.duration} mins session' : '10:00 AM - 10:45 AM');
+    final countdown = provider.formattedCountdown;
+    final progress = provider.progressFraction > 0 ? provider.progressFraction : 0.45;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 96),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Greeting Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Good Morning! 👋',
-                      style: GoogleFonts.inter(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF0F172A),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "Here's what's happening at the event today.",
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(fontSize: 13, color: AppSlateColors.slate500),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircleAvatar(
-                    radius: 18,
-                    backgroundColor: const Color(0xFF2563EB),
-                    child: Text(
-                      userName.isNotEmpty ? userName[0].toUpperCase() : 'O',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 90),
-                    child: Text(
-                      '$userName\nOrganizer',
-                      style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              )
-            ],
-          ),
-          const SizedBox(height: 24),
-
           // Main Live Card (Gradient Hero)
           Container(
             padding: const EdgeInsets.all(24),
@@ -507,31 +486,35 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Python Workshop',
+                            liveTitle,
                             style: GoogleFonts.inter(
-                              fontSize: 24,
+                              fontSize: 22,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '10:30 AM - 11:30 AM',
+                            liveTime,
                             style: GoogleFonts.inter(
-                              fontSize: 14,
+                              fontSize: 13,
                               color: Colors.white.withValues(alpha: 0.8),
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: const Icon(Icons.code_rounded, color: Colors.white, size: 32),
+                      child: const Icon(Icons.mic_external_on_rounded, color: Colors.white, size: 28),
                     ),
                   ],
                 ),
@@ -541,7 +524,7 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: LinearProgressIndicator(
-                    value: 0.65,
+                    value: progress,
                     minHeight: 8,
                     backgroundColor: Colors.white.withValues(alpha: 0.25),
                     valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
@@ -553,7 +536,7 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
                     const Icon(Icons.access_time_rounded, color: Colors.white, size: 16),
                     const SizedBox(width: 6),
                     Text(
-                      '45 min left',
+                      '$countdown left',
                       style: GoogleFonts.inter(
                         color: Colors.white,
                         fontSize: 13,
@@ -573,8 +556,10 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
               Expanded(
                 child: _buildTimelineCard(
                   tag: 'Up Next',
-                  title: 'Keynote by Dr. Sharma',
-                  time: '11:30 AM - 12:00 PM',
+                  title: nextSession?.title ?? (agendaList.length > 1 ? agendaList[1].title : 'Technical Session'),
+                  time: nextSession != null
+                      ? '${nextSession.duration} mins'
+                      : (agendaList.length > 1 ? '${agendaList[1].duration} mins' : '11:30 AM - 12:00 PM'),
                   icon: Icons.mic_rounded,
                   badgeColor: const Color(0xFFEFF6FF),
                   textColor: const Color(0xFF2563EB),
@@ -584,8 +569,8 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
               Expanded(
                 child: _buildTimelineCard(
                   tag: 'Later',
-                  title: 'Break & Networking',
-                  time: '12:00 PM - 12:15 PM',
+                  title: agendaList.length > 2 ? agendaList[2].title : 'Break & Stage Wrap',
+                  time: agendaList.length > 2 ? '${agendaList[2].duration} mins' : '12:00 PM - 12:15 PM',
                   icon: Icons.coffee_rounded,
                   badgeColor: const Color(0xFFF8FAFC),
                   textColor: const Color(0xFF64748B),
@@ -751,130 +736,429 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
   // 2: AGENDA MANAGEMENT VIEW
   // ==========================================
   Widget _buildAgendaManagementView() {
-    final sessions = [
-      {'time': '09:00 AM', 'title': 'Welcome & Registration', 'duration': '15 min', 'status': 'done'},
-      {'time': '09:15 AM', 'title': 'Opening Ceremony', 'duration': '45 min', 'status': 'done'},
-      {'time': '10:00 AM', 'title': 'Keynote by Dr. Sharma', 'duration': '45 min', 'status': 'done'},
-      {'time': '10:45 AM', 'title': 'Python Workshop', 'duration': '60 min', 'status': 'live'},
-      {'time': '11:45 AM', 'title': 'Technical Session: Cloud Native', 'duration': '45 min', 'status': 'upcoming'},
-      {'time': '12:30 PM', 'title': 'Networking & Lunch Break', 'duration': '45 min', 'status': 'upcoming'},
-    ];
+    return Consumer<EventProvider>(
+      builder: (context, provider, _) {
+        final agendaList = provider.agenda;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 96),
+        return SingleChildScrollView(
+          padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 96),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Event Agenda',
+                          style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Manage your event schedule and sessions.',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(color: AppSlateColors.slate500, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton.icon(
+                    onPressed: () => _showAddOrEditSessionModal(context),
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: const Text('Add Session'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      elevation: 0,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              if (agendaList.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.calendar_today_outlined, size: 44, color: AppSlateColors.slate300),
+                      const SizedBox(height: 12),
+                      Text(
+                        'No Agenda Items Loaded',
+                        style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Tap "+ Add Session" to create your first event session.',
+                        style: GoogleFonts.inter(fontSize: 13, color: AppSlateColors.slate500),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: agendaList.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final item = agendaList[index];
+                    return _buildModernAgendaCard(context, item, provider);
+                  },
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildModernAgendaCard(BuildContext context, AgendaItemModel item, EventProvider provider) {
+    final isLive = item.isLive;
+    final isDone = item.isDone;
+
+    Color statusBg = isLive
+        ? const Color(0xFFECFDF5)
+        : (isDone ? const Color(0xFFF1F5F9) : const Color(0xFFEFF6FF));
+    Color statusText = isLive
+        ? const Color(0xFF059669)
+        : (isDone ? const Color(0xFF64748B) : const Color(0xFF2563EB));
+    String statusLabel = isLive
+        ? 'NOW LIVE'
+        : (isDone ? 'COMPLETED' : 'UPCOMING');
+
+    String timeFormatted = '--:--';
+    if (item.startTime.isNotEmpty && item.endTime.isNotEmpty) {
+      timeFormatted = '${_formatTimeString(item.startTime)} - ${_formatTimeString(item.endTime)}';
+    } else if (item.plannedStart.isNotEmpty) {
+      timeFormatted = _formatTimeString(item.plannedStart);
+    } else {
+      timeFormatted = '${item.duration} min session';
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isLive ? const Color(0xFFF0FDF4) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isLive ? const Color(0xFF10B981) : const Color(0xFFE2E8F0),
+          width: isLive ? 1.5 : 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isLive ? const Color(0xFF10B981).withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '#${item.order} • ${item.type.toUpperCase()}',
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.8,
+                    color: const Color(0xFF475569),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: statusBg,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    if (isLive) ...[
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF10B981),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                    ],
                     Text(
-                      'Event Agenda',
-                      style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      'Manage your event schedule and sessions.',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(color: AppSlateColors.slate500),
+                      statusLabel,
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: statusText,
+                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('Add Session'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              const Spacer(),
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(),
+                padding: const EdgeInsets.all(4),
+                icon: const Icon(Icons.edit_outlined, size: 18, color: AppSlateColors.slate400),
+                onPressed: () => _showAddOrEditSessionModal(context, item: item),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(),
+                padding: const EdgeInsets.all(4),
+                icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppSlateColors.rose400),
+                onPressed: () => _confirmDeleteSession(context, item, provider),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            item.title,
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF0F172A),
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.schedule_rounded, size: 15, color: Color(0xFF2563EB)),
+              const SizedBox(width: 6),
+              Text(
+                timeFormatted,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF334155),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${item.duration} min',
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: AppSlateColors.slate600,
+                  ),
+                ),
+              ),
+              if (item.absorbable) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'BUFFER',
+                    style: GoogleFonts.inter(
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFFD97706),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          if (item.notes != null && item.notes!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              item.notes!,
+              style: GoogleFonts.inter(fontSize: 12, color: AppSlateColors.slate500),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _formatTimeString(String? isoString) {
+    if (isoString == null || isoString.isEmpty) return '--:--';
+    final dt = DateTime.tryParse(isoString);
+    if (dt == null) return isoString;
+    return DateFormat('hh:mm a').format(dt.toLocal());
+  }
+
+  void _showAddOrEditSessionModal(BuildContext context, {AgendaItemModel? item}) {
+    final isEditing = item != null;
+    final titleController = TextEditingController(text: item?.title ?? '');
+    final durationController = TextEditingController(text: (item?.duration ?? 15).toString());
+    String selectedType = item?.type ?? 'talk';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    isEditing ? 'Edit Session' : 'Add New Session',
+                    style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: titleController,
+                decoration: InputDecoration(
+                  labelText: 'Session Title',
+                  hintText: 'e.g. Keynote Speech',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: durationController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Duration (mins)',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      initialValue: selectedType,
+                      decoration: InputDecoration(
+                        labelText: 'Session Type',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'keynote', child: Text('Keynote')),
+                        DropdownMenuItem(value: 'talk', child: Text('Talk')),
+                        DropdownMenuItem(value: 'panel', child: Text('Panel')),
+                        DropdownMenuItem(value: 'workshop', child: Text('Workshop')),
+                        DropdownMenuItem(value: 'break', child: Text('Break')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) selectedType = val;
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: () async {
+                    if (titleController.text.trim().isEmpty) return;
+                    final provider = Provider.of<EventProvider>(context, listen: false);
+                    final now = DateTime.now();
+                    final dur = int.tryParse(durationController.text) ?? 15;
+
+                    final newItem = AgendaItemModel(
+                      id: item?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+                      order: item?.order ?? (provider.agenda.length + 1),
+                      title: titleController.text.trim(),
+                      type: selectedType,
+                      duration: dur,
+                      plannedStart: item?.plannedStart ?? now.toIso8601String(),
+                      startTime: item?.startTime ?? now.toIso8601String(),
+                      endTime: item?.endTime ?? now.add(Duration(minutes: dur)).toIso8601String(),
+                      status: item?.status ?? 'upcoming',
+                    );
+
+                    await provider.addAgendaItem(newItem, originalId: item?.id);
+                    if (ctx.mounted) Navigator.pop(ctx);
+                  },
+                  child: Text(
+                    isEditing ? 'Save Changes' : 'Add Session',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: sessions.length,
-              separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
-              itemBuilder: (context, index) {
-                final item = sessions[index];
-                final isLive = item['status'] == 'live';
+        );
+      },
+    );
+  }
 
-                return Container(
-                  color: isLive ? const Color(0xFFECFDF5) : Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 90,
-                        child: Text(
-                          item['time']!,
-                          style: GoogleFonts.inter(
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF334155),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          item['title']!,
-                          style: GoogleFonts.inter(
-                            fontWeight: isLive ? FontWeight.bold : FontWeight.w500,
-                            color: const Color(0xFF0F172A),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: isLive ? const Color(0xFF10B981) : const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          isLive ? 'Now Live' : item['duration']!,
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: isLive ? Colors.white : const Color(0xFF64748B),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        visualDensity: VisualDensity.compact,
-                        constraints: const BoxConstraints(),
-                        padding: const EdgeInsets.all(4),
-                        icon: const Icon(Icons.edit_outlined, size: 18, color: AppSlateColors.slate400),
-                        onPressed: () {},
-                      ),
-                      const SizedBox(width: 4),
-                      IconButton(
-                        visualDensity: VisualDensity.compact,
-                        constraints: const BoxConstraints(),
-                        padding: const EdgeInsets.all(4),
-                        icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppSlateColors.rose400),
-                        onPressed: () {},
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+  void _confirmDeleteSession(BuildContext context, AgendaItemModel item, EventProvider provider) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Session'),
+        content: Text('Are you sure you want to delete "${item.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await provider.deleteAgendaItem(item.id);
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

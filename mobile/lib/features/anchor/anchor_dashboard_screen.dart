@@ -36,6 +36,14 @@ class _AnchorDashboardScreenState extends State<AnchorDashboardScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AnchorProvider>().fetchDashboardFromBackend();
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -268,42 +276,47 @@ class _AnchorDashboardScreenState extends State<AnchorDashboardScreen> {
         final bool isTablet = width >= 600 && width < 1024;
         final bool isDesktop = width >= 1024;
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 14,
-            bottom: 110, // Margin for floating nav and FAB
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Searchable event list input
-              _buildSearchBar(provider),
-              const SizedBox(height: 14),
+        return RefreshIndicator(
+          onRefresh: () => provider.fetchDashboardFromBackend(),
+          color: AppTheme.primaryBlue,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 14,
+              bottom: 110, // Margin for floating nav and FAB
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Searchable event list input
+                _buildSearchBar(provider),
+                const SizedBox(height: 14),
 
-              // Live Stage Command Dashboard Banner
-              _buildLiveStageCommandBanner(context, provider),
-              const SizedBox(height: 12),
+                // Live Stage Command Dashboard Banner
+                _buildLiveStageCommandBanner(context, provider),
+                const SizedBox(height: 12),
 
-              // Quick Stage Scripts Library Banner
-              _buildScriptsLibraryPromoBanner(context),
-              const SizedBox(height: 20),
+                // Quick Stage Scripts Library Banner
+                _buildScriptsLibraryPromoBanner(context),
+                const SizedBox(height: 20),
 
-              // SECTION 1: STICKY EVENT INVITATIONS (if count > 0)
-              if (provider.filteredInvitations.isNotEmpty) ...[
-                _buildStickyInvitationsSection(provider),
-                const SizedBox(height: 24),
+                // SECTION 1: STICKY EVENT INVITATIONS (if count > 0)
+                if (provider.filteredInvitations.isNotEmpty) ...[
+                  _buildStickyInvitationsSection(provider),
+                  const SizedBox(height: 24),
+                ],
+
+                // Responsive Content Distribution
+                if (isDesktop)
+                  _buildDesktopLayout(provider)
+                else if (isTablet)
+                  _buildTabletLayout(provider)
+                else
+                  _buildMobileLayout(provider),
               ],
-
-              // Responsive Content Distribution
-              if (isDesktop)
-                _buildDesktopLayout(provider)
-              else if (isTablet)
-                _buildTabletLayout(provider)
-              else
-                _buildMobileLayout(provider),
-            ],
+            ),
           ),
         );
       },

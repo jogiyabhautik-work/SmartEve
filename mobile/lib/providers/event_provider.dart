@@ -718,7 +718,8 @@ class EventProvider extends ChangeNotifier {
 
   Future<void> fetchSpeakers(String? eventId) async {
     try {
-      final neonSpeakers = await NeonDatabaseService().getSpeakersForEvent(eventId);
+      final targetId = eventId ?? _event?.id;
+      final neonSpeakers = await NeonDatabaseService().getSpeakersForEvent(targetId);
       if (neonSpeakers.isNotEmpty) {
         final existingIds = neonSpeakers.map((s) => s.id).toSet();
         final localOnly = _speakers.where((s) => !existingIds.contains(s.id)).toList();
@@ -760,7 +761,11 @@ class EventProvider extends ChangeNotifier {
       }
     }
 
-    if (_organizerEvents.isEmpty) {
+    if (_organizerEvents.isNotEmpty) {
+      _event ??= _organizerEvents.first;
+      await fetchAgenda(_event?.id);
+      await fetchSpeakers(_event?.id);
+    } else {
       debugPrint("ℹ️ [EventProvider] No events found in Neon DB.");
     }
 
@@ -817,12 +822,10 @@ class EventProvider extends ChangeNotifier {
 
   Future<void> fetchAgenda(String? eventId) async {
     try {
-      final rawList = await NeonDatabaseService().getAgendaForEvent(eventId);
+      final targetId = eventId ?? _event?.id;
+      final rawList = await NeonDatabaseService().getAgendaForEvent(targetId);
       if (rawList.isNotEmpty) {
         _agenda = rawList.map((map) => AgendaItemModel.fromJson(map)).toList();
-        notifyListeners();
-      } else {
-        _agenda = [];
         notifyListeners();
       }
     } catch (e) {
