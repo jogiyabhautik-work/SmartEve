@@ -84,19 +84,24 @@ class _AttendeeScreenState extends State<AttendeeScreen> with SingleTickerProvid
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.question_answer_rounded, color: AppTheme.liveGreen, size: 22),
-                          SizedBox(width: 8),
-                          Text(
-                            'Ask Active Speaker',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.textPrimary,
+                      const Expanded(
+                        child: Row(
+                          children: [
+                            Icon(Icons.question_answer_rounded, color: AppTheme.liveGreen, size: 22),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Ask Active Speaker',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textPrimary,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       IconButton(
                         icon: const Icon(Icons.close_rounded, color: AppTheme.textMuted),

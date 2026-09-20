@@ -70,8 +70,53 @@ class EventProvider extends ChangeNotifier {
       }
       final updatedQna = await NeonDatabaseService().getQnaQuestions(_event?.id);
       _qnaQuestions = updatedQna;
+
+      final updatedNotifs = await NeonDatabaseService().getNotifications(_event?.id);
+      if (updatedNotifs.isNotEmpty) {
+        final List<NotificationModel> parsed = [];
+        for (final m in updatedNotifs) {
+          parsed.add(NotificationModel(
+            id: m['id'],
+            type: m['type'],
+            message: m['message'],
+            createdBy: m['createdBy'],
+            createdAt: m['createdAt'],
+          ));
+        }
+        _notifications.clear();
+        _notifications.addAll(parsed);
+      }
+
       notifyListeners();
     } catch (_) {}
+  }
+
+  Future<bool> broadcastAnnouncement(String message, {String type = 'announcement'}) async {
+    if (message.trim().isEmpty) return false;
+    final now = DateTime.now();
+    final targetId = _event?.id ?? 'default_event';
+
+    final notif = NotificationModel(
+      id: 'notif-${now.millisecondsSinceEpoch}',
+      type: type,
+      message: message.trim(),
+      createdBy: 'organizer',
+      createdAt: now.millisecondsSinceEpoch,
+    );
+
+    _notifications.insert(0, notif);
+    notifyListeners();
+
+    try {
+      await NeonDatabaseService().saveNotification(
+        eventId: targetId,
+        message: message.trim(),
+        type: type,
+      );
+    } catch (e) {
+      debugPrint("⚠️ Direct Neon DB announcement error: $e");
+    }
+    return true;
   }
 
   Future<bool> submitQnaQuestion(String question, {String? authorName}) async {

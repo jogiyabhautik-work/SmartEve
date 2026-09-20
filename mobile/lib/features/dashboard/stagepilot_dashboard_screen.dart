@@ -379,35 +379,46 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Good Morning, Anchor! 👋',
-                    style: GoogleFonts.inter(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF0F172A),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Good Morning, Anchor! 👋',
+                      style: GoogleFonts.inter(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF0F172A),
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "Here's what's happening at the event today.",
-                    style: GoogleFonts.inter(fontSize: 14, color: AppSlateColors.slate500),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      "Here's what's happening at the event today.",
+                      style: GoogleFonts.inter(fontSize: 13, color: AppSlateColors.slate500),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   const CircleAvatar(
-                    radius: 18,
+                    radius: 16,
                     backgroundColor: Color(0xFFE2E8F0),
-                    child: Icon(Icons.person, color: Color(0xFF475569)),
+                    child: Icon(Icons.person, size: 18, color: Color(0xFF475569)),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Romal Tandel\nAnchor',
-                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                  const SizedBox(width: 6),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 90),
+                    child: Text(
+                      'Romal Tandel\nAnchor',
+                      style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               )
@@ -564,7 +575,7 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
 
           // Schedule Status Alert Banner
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: const Color(0xFFFFFBEB),
               border: Border.all(color: const Color(0xFFFDE68A)),
@@ -573,14 +584,14 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFEF3C7),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706)),
+                  child: const Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706), size: 20),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -590,26 +601,37 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
                         style: GoogleFonts.inter(
                           fontWeight: FontWeight.bold,
                           color: const Color(0xFF92400E),
+                          fontSize: 13,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         _isDelayApplied
-                            ? 'Running $_delayMinutes minutes late. Dynamic reflow applied.'
-                            : 'Running 10 minutes late. Action recommended.',
-                        style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFFB45309)),
+                            ? 'Running $_delayMinutes minutes late.'
+                            : 'Running 10 min late.',
+                        style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFFB45309)),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
-                ElevatedButton(
-                  onPressed: () => setState(() => _selectedIndex = 4),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFD97706),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                const SizedBox(width: 6),
+                Flexible(
+                  fit: FlexFit.loose,
+                  child: ElevatedButton(
+                    onPressed: () => setState(() => _selectedIndex = 4),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFD97706),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Update Schedule', style: TextStyle(fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis),
                   ),
-                  child: const Text('Update Schedule'),
                 ),
               ],
             ),
@@ -628,7 +650,7 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
     required Color textColor,
   }) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -652,11 +674,13 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              fontSize: 15,
+              fontSize: 13,
               fontWeight: FontWeight.bold,
               color: const Color(0xFF0F172A),
             ),
@@ -664,11 +688,18 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
           const SizedBox(height: 4),
           Row(
             children: [
-              Icon(icon, size: 14, color: AppSlateColors.slate400),
-              const SizedBox(width: 6),
-              Text(
-                time,
-                style: GoogleFonts.inter(fontSize: 12, color: AppSlateColors.slate500),
+              Icon(icon, size: 13, color: AppSlateColors.slate400),
+              const SizedBox(width: 4),
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    time,
+                    maxLines: 1,
+                    style: GoogleFonts.inter(fontSize: 11, color: AppSlateColors.slate500),
+                  ),
+                ),
               ),
             ],
           ),
@@ -1205,7 +1236,7 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
 
           // Duration Adjustment Picker Box
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
@@ -1217,31 +1248,42 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Delay Duration',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
+                    Expanded(
+                      child: Text(
+                        'Delay Duration',
+                        style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 15),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.remove_circle_outline),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                          icon: const Icon(Icons.remove_circle_outline, size: 22),
                           onPressed: () {
                             if (_delayMinutes > 5) setState(() => _delayMinutes -= 5);
                           },
                         ),
+                        const SizedBox(width: 4),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: const Color(0xFFF1F5F9),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             '$_delayMinutes min',
-                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
+                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
                           ),
                         ),
+                        const SizedBox(width: 4),
                         IconButton(
-                          icon: const Icon(Icons.add_circle_outline),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                          icon: const Icon(Icons.add_circle_outline, size: 22),
                           onPressed: () => setState(() => _delayMinutes += 5),
                         ),
                       ],
@@ -1313,10 +1355,16 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.circle, size: 6, color: Color(0xFF2563EB)),
+          const Padding(
+            padding: EdgeInsets.only(top: 6),
+            child: Icon(Icons.circle, size: 6, color: Color(0xFF2563EB)),
+          ),
           const SizedBox(width: 8),
-          Text(text, style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF64748B))),
+          Expanded(
+            child: Text(text, style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF64748B))),
+          ),
         ],
       ),
     );

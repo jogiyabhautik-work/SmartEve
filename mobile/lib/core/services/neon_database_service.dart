@@ -367,6 +367,15 @@ class NeonDatabaseService {
   }
 
   /// Fetch all events directly from Neon PostgreSQL
+  String _safeString(dynamic val, [String fallback = '']) {
+    if (val == null) return fallback;
+    final str = val.toString();
+    if (str.toLowerCase().contains('undecodedbytes') || str.toLowerCase().contains('instance of')) {
+      return fallback;
+    }
+    return str;
+  }
+
   Future<List<EventModel>> getEvents() async {
     Connection? connection;
     final List<EventModel> eventsList = [];
@@ -390,10 +399,10 @@ class NeonDatabaseService {
 
       final result = await connection.execute(Sql.named(sql));
       for (final row in result) {
-        final id = row[0]?.toString() ?? '';
-        final title = row[1]?.toString() ?? 'Untitled Event';
-        final rawDesc = row[2]?.toString() ?? '';
-        final rawType = row[3]?.toString() ?? 'Conference';
+        final id = _safeString(row[0]);
+        final title = _safeString(row[1], 'Untitled Event');
+        final rawDesc = _safeString(row[2]);
+        final rawType = _safeString(row[3], 'Conference');
         final rawStartDate = row[4];
         String startDateStr = '';
         if (rawStartDate != null) {
@@ -411,16 +420,16 @@ class NeonDatabaseService {
               final d = dt.day.toString().padLeft(2, '0');
               startDateStr = '$y-$m-$d';
             } else {
-              startDateStr = rawStartDate.toString().split('T').first.split(' ').first;
+              startDateStr = _safeString(rawStartDate).split('T').first.split(' ').first;
             }
           }
         } else {
           startDateStr = DateTime.now().toString().split(' ')[0];
         }
 
-        final venue = row[5]?.toString() ?? 'Main Auditorium';
-        final ownerId = row[6]?.toString() ?? '';
-        final rawStatus = row[7]?.toString() ?? 'draft';
+        final venue = _safeString(row[5], 'Main Auditorium');
+        final ownerId = _safeString(row[6]);
+        final rawStatus = _safeString(row[7], 'draft');
 
         // Extract tone and joinCode if present in description format
         String tone = 'Visionary & Energetic';
@@ -1150,6 +1159,127 @@ class NeonDatabaseService {
       await connection?.close();
     }
     return questions;
+  }
+
+  /// Ensure stage_notifications table exists in Neon PostgreSQL
+  Future<void> _ensureNotificationsTable(Connection connection) async {
+    try {
+      const createSql = """
+        CREATE TABLE IF NOT EXISTS stage_notifications (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          event_id UUID REFERENCES events(id) ON DELETE CASCADE,
+          notif_type VARCHAR(50) DEFAULT 'announcement',
+          message TEXT NOT NULL,
+          created_by VARCHAR(100) DEFAULT 'organizer',
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+      """;
+      await connection.execute(Sql.named(createSql));
+    } catch (e) {
+      debugPrint("⚠️ [Neon DB Direct] Error checking/updating stage_notifications table: $e");
+    }
+  }
+
+  /// Broadcast a live stage notification / announcement into Neon PostgreSQL
+  Future<bool> saveNotification({
+    required String eventId,
+    required String message,
+    String type = 'announcement',
+    String createdBy = 'organizer',
+  }) async {
+    Connection? connection;
+    try {
+      connection = await _getConnection();
+      await _ensureNotificationsTable(connection);
+
+      String? targetEventUuid;
+      if (_isUuid(eventId)) {
+        targetEventUuid = eventId;
+      } else {
+        final res = await connection.execute(Sql.named("SELECT id FROM events ORDER BY created_at DESC LIMIT 1"));
+        if (res.isNotEmpty) targetEventUuid = res.first[0]?.toString();
+      }
+
+      if (targetEventUuid == null) return false;
+
+      const sql = """
+        INSERT INTO stage_notifications (
+          event_id,
+          notif_type,
+          message,
+          created_by,
+          created_at
+        ) VALUES (
+          CAST(@event_id AS uuid),
+          @notif_type,
+          @message,
+          @created_by,
+          CURRENT_TIMESTAMP
+        );
+      """;
+
+      await connection.execute(
+        Sql.named(sql),
+        parameters: {
+          'event_id': targetEventUuid,
+          'notif_type': type,
+          'message': message,
+          'created_by': createdBy,
+        },
+      );
+      debugPrint("🐘 [Neon DB Direct] Saved stage notification: '$message'");
+      return true;
+    } catch (e) {
+      debugPrint("⚠️ [Neon DB Direct] Error saving stage notification: $e");
+      return false;
+    } finally {
+      await connection?.close();
+    }
+  }
+
+  /// Fetch live stage notifications for an event from Neon PostgreSQL
+  Future<List<Map<String, dynamic>>> getNotifications(String? eventId) async {
+    Connection? connection;
+    final List<Map<String, dynamic>> notifs = [];
+    try {
+      connection = await _getConnection();
+      await _ensureNotificationsTable(connection);
+
+      String sql = "SELECT id, notif_type, message, created_by, created_at FROM stage_notifications ";
+      if (_isUuid(eventId)) {
+        sql += " WHERE event_id = CAST(@event_id AS uuid) ";
+      }
+      sql += " ORDER BY created_at DESC LIMIT 20; ";
+
+      final result = await connection.execute(
+        Sql.named(sql),
+        parameters: _isUuid(eventId) ? {'event_id': eventId} : {},
+      );
+
+      for (final row in result) {
+        int createdAtMillis = DateTime.now().millisecondsSinceEpoch;
+        if (row[4] != null) {
+          if (row[4] is DateTime) {
+            createdAtMillis = (row[4] as DateTime).millisecondsSinceEpoch;
+          } else {
+            createdAtMillis = DateTime.tryParse(row[4].toString())?.millisecondsSinceEpoch ?? createdAtMillis;
+          }
+        }
+
+        notifs.add({
+          'id': row[0]?.toString() ?? '',
+          'type': row[1]?.toString() ?? 'announcement',
+          'message': row[2]?.toString() ?? '',
+          'createdBy': row[3]?.toString() ?? 'organizer',
+          'createdAt': createdAtMillis,
+        });
+      }
+    } catch (e) {
+      debugPrint("⚠️ [Neon DB Direct] Error fetching stage notifications: $e");
+    } finally {
+      await connection?.close();
+    }
+    return notifs;
   }
 }
 

@@ -17,6 +17,7 @@ class StageDisplayScreen extends StatelessWidget {
             final session = provider.currentSession;
             final speaker = provider.currentSpeaker;
             final nextSession = provider.nextSession;
+            final notifications = provider.notifications;
             final isOvertime = provider.remainingSeconds < 0;
 
             return Padding(
@@ -43,6 +44,32 @@ class StageDisplayScreen extends StatelessWidget {
                       ),
                     ],
                   ),
+
+                  // Stage Announcement Banner
+                  if (notifications.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.warningAmber.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppTheme.warningAmber, width: 1.5),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.campaign_rounded, color: AppTheme.warningAmber, size: 24),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              notifications.first.message,
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.warningAmber),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
                   const Spacer(),
 
                   // Giant Stage Countdown Timer
