@@ -8,7 +8,6 @@ import '../../providers/event_provider.dart';
 import '../dashboard/stagepilot_dashboard_screen.dart';
 import '../auth/role_selection_screen.dart';
 import '../scripts/scripts_library_screen.dart';
-import '../live_dashboard/live_dashboard_screen.dart';
 
 class AnchorTeleprompterScreen extends StatefulWidget {
   const AnchorTeleprompterScreen({super.key});
@@ -105,15 +104,7 @@ class _AnchorTeleprompterScreenState extends State<AnchorTeleprompterScreen> {
               );
             },
           ),
-          IconButton(
-            tooltip: 'Live Stage Dashboard',
-            icon: const Icon(Icons.co_present_rounded, color: Color(0xFFEF4444)),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const LiveDashboardScreen()),
-              );
-            },
-          ),
+
           IconButton(
             tooltip: 'Scripts Library',
             icon: const Icon(Icons.description_rounded, color: AppTheme.primaryBlue),
@@ -131,11 +122,7 @@ class _AnchorTeleprompterScreenState extends State<AnchorTeleprompterScreen> {
               side: const BorderSide(color: AppTheme.border),
             ),
             onSelected: (value) {
-              if (value == 'live_stage') {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const LiveDashboardScreen()),
-                );
-              } else if (value == 'scripts') {
+              if (value == 'scripts') {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const ScriptsLibraryScreen()),
                 );
@@ -152,16 +139,6 @@ class _AnchorTeleprompterScreenState extends State<AnchorTeleprompterScreen> {
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'live_stage',
-                child: Row(
-                  children: [
-                    Icon(Icons.co_present_rounded, size: 18, color: Color(0xFFEF4444)),
-                    SizedBox(width: 10),
-                    Text('Live Stage Dashboard', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFEF4444))),
-                  ],
-                ),
-              ),
               const PopupMenuItem(
                 value: 'scripts',
                 child: Row(

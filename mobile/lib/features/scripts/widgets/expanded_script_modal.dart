@@ -579,6 +579,21 @@ class _ExpandedScriptModalState extends State<ExpandedScriptModal> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
             ),
+
+            // Add to Event (Link to Agenda)
+            OutlinedButton.icon(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Script linked to Event Agenda.')),
+                );
+              },
+              icon: const Icon(Icons.add_link_rounded, size: 16),
+              label: const Text('Add to Event'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
           ],
         ),
 

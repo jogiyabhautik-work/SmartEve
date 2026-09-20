@@ -11,7 +11,6 @@ import '../../models/anchor_dashboard_models.dart';
 import '../events/event_details_screen.dart';
 import '../anchor/anchor_teleprompter_screen.dart';
 import '../scripts/scripts_library_screen.dart';
-import '../live_dashboard/live_dashboard_screen.dart';
 import 'widgets/anchor_invitation_card.dart';
 import 'widgets/upcoming_event_card.dart';
 import 'widgets/completed_events_section.dart';
@@ -282,9 +281,6 @@ class _AnchorDashboardScreenState extends State<AnchorDashboardScreen> {
               _buildSearchBar(provider),
               const SizedBox(height: 14),
 
-              // Live Stage Command Dashboard Banner
-              _buildLiveStageCommandBanner(context, provider),
-              const SizedBox(height: 12),
 
               // Quick Stage Scripts Library Banner
               _buildScriptsLibraryPromoBanner(context),
@@ -424,126 +420,6 @@ class _AnchorDashboardScreenState extends State<AnchorDashboardScreen> {
     );
   }
 
-  Widget _buildLiveStageCommandBanner(BuildContext context, AnchorProvider provider) {
-    final activeEvent = provider.upcomingEvents.firstWhere(
-      (e) => e.status == AnchorEventStatus.active,
-      orElse: () => provider.upcomingEvents.isNotEmpty
-          ? provider.upcomingEvents.first
-          : const AnchorEventCardItem(
-              id: "20b06ff2-bcdb-478d-9ebc-725f50f1f601",
-              title: "ABC (Live Conclave)",
-              eventType: "Seminar",
-              date: "Today",
-              time: "10:30 AM",
-              organizerName: "Romal Tandel",
-              collegeName: "SmartEve Partner Arena",
-              status: AnchorEventStatus.active,
-              joinCode: "AB26",
-              venue: "Main Stage & Auditorium",
-              duration: "3h 30m",
-            ),
-    );
-
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => LiveDashboardScreen(eventId: activeEvent.id),
-          ),
-        );
-      },
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.4), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFEF4444).withValues(alpha: 0.15),
-              blurRadius: 14,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEF4444).withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.co_present_rounded, color: Color(0xFFEF4444), size: 24),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Color(0xFFEF4444),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'LIVE STAGE COMMAND ACTIVE',
-                        style: GoogleFonts.inter(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFFEF4444),
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    'Enter Live Stage Dashboard',
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${activeEvent.title} • Fullscreen podium view with real-time controls',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      color: const Color(0xFF94A3B8),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEF4444).withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 16),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   // Section 1: Sticky Invitations Header & Cards
   Widget _buildStickyInvitationsSection(AnchorProvider provider) {

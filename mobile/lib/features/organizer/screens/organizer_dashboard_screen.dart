@@ -12,6 +12,8 @@ import '../../dashboard/stagepilot_dashboard_screen.dart';
 import 'event_create_screen.dart';
 import 'event_detail_screen.dart';
 import 'speaker_add_screen.dart';
+import '../../../providers/notification_provider.dart';
+import '../../notifications/notification_center_screen.dart';
 
 class OrganizerDashboardScreen extends StatefulWidget {
   const OrganizerDashboardScreen({super.key});
@@ -1213,6 +1215,58 @@ class _OrganizerDashboardScreenState extends State<OrganizerDashboardScreen> {
                     color: Colors.white70,
                   ),
                 ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Consumer<NotificationProvider>(
+            builder: (context, notif, __) => Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(
+                  icon: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.notifications_none_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const NotificationCenterScreen(),
+                      ),
+                    );
+                  },
+                ),
+                if (notif.unreadCount > 0)
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: AppTheme.dangerRose,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                      child: Text(
+                        '${notif.unreadCount}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),

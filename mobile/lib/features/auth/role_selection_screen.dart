@@ -7,7 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../providers/event_provider.dart';
 import '../../core/services/firebase_service.dart';
 import '../dashboard/stagepilot_dashboard_screen.dart';
-import '../anchor/anchor_teleprompter_screen.dart';
+import '../anchor/anchor_dashboard_screen.dart';
 import '../stage_display/stage_display_screen.dart';
 import '../organizer/screens/organizer_dashboard_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
@@ -210,24 +210,15 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               // Role 2: Anchor Suite & Dashboard
               _buildRoleCard(
                 icon: Icons.mic_external_on_rounded,
-                title: 'Anchor Teleprompter',
+                title: 'Anchor Dashboard',
                 subtitle: 'Speaker intros, fail-safe AI scripts & live read-aloud TTS',
                 badgeText: 'STAGE HOST',
                 badgeColor: AppTheme.liveGreen,
-                onTap: () => _navigateTo(const AnchorTeleprompterScreen()),
+                onTap: () => _navigateTo(const AnchorDashboardScreen()),
               ),
               const SizedBox(height: 14),
 
-              // Role 4: Admin Hub
-              _buildRoleCard(
-                icon: Icons.admin_panel_settings_rounded,
-                title: 'Admin Control Center',
-                subtitle: 'Platform oversight, user management & AI model fallback config',
-                badgeText: 'ADMIN',
-                badgeColor: AppTheme.primaryPurple,
-                onTap: () => _navigateTo(const AdminDashboardScreen()),
-              ),
-              const SizedBox(height: 14),
+
 
               // Role 5: Public Stage Display
               _buildRoleCard(

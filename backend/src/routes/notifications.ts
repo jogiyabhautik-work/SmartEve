@@ -1,12 +1,17 @@
-﻿import { Router, Request, Response } from "express";
+import { Router, Request, Response } from "express";
 import { sendFcmNotification } from "../services/notifications/fcm.js";
+import {
+  sendNotification,
+  getNotifications,
+  markNotificationAsRead,
+  markAllAsRead,
+  deleteNotification,
+  getPreferences,
+  updatePreferences,
+  registerPushToken,
+} from "../services/notifications/notificationService.js";
+import { NotificationType } from "../types/notification_system.js";
 import { sendError, sendSuccess } from "../utils/apiResponse.js";
-
-// =============================================================================
-// In-memory notification center store (anchor-facing global notifications,
-// direct messages, and announcement alerts). In production this would live
-// in a notifications table; the demo keeps it in memory.
-// =============================================================================
 
 export interface MessageAttachment {
   id: string;
@@ -71,11 +76,10 @@ const anchorNotifications: AnchorNotification[] = [
     id: "nt-1",
     category: "invitation",
     title: "New Invitation",
-    message:
-      "You've been invited to TechNova Live Summit 2026 by Alex Rivera",
+    message: "You've been invited to TechNova Live Summit 2026 by Alex Rivera",
     detailedText:
       "Alex Rivera from Stanford Engineering Concourse has invited you to anchor the morning keynotes at the TechNova Live Summit 2026. Event date: September 20, 2026, 09:30 AM.",
-    type: "invitation",
+    type: "anchor_invitation",
     createdBy: "user-organizer-1",
     senderName: "Alex Rivera",
     senderAvatarUrl:
@@ -99,8 +103,8 @@ const anchorNotifications: AnchorNotification[] = [
     message:
       "Opening script for TechNova Live Summit 2026 has been updated by the organizer",
     detailedText:
-      "Alex Rivera revised the opening script for the TechNova Live Summit 2026. The new version adds a welcome note for the VIP guests. Review the updated script before the event.",
-    type: "change",
+      "Alex Rivera revised the opening script for the TechNova Live Summit 2026. The new version adds a welcome note for the VIP guests.",
+    type: "scripts_updated",
     createdBy: "user-organizer-1",
     senderName: "Alex Rivera",
     senderRole: "organizer",
@@ -119,8 +123,8 @@ const anchorNotifications: AnchorNotification[] = [
     message:
       "Agenda for TechNova Live Summit 2026 has been updated — Keynote moved to 10:15 AM",
     detailedText:
-      "The keynote session has been rescheduled from 09:45 AM to 10:15 AM to accommodate a late-arriving speaker. The tea break has been shortened to 20 minutes. Please review the new agenda flow.",
-    type: "change",
+      "The keynote session has been rescheduled from 09:45 AM to 10:15 AM to accommodate a late-arriving speaker.",
+    type: "agenda_updated",
     createdBy: "user-organizer-1",
     senderName: "Alex Rivera",
     senderRole: "organizer",
@@ -138,8 +142,8 @@ const anchorNotifications: AnchorNotification[] = [
     title: "Session Delayed",
     message: "Keynote session has been delayed by 8 minutes",
     detailedText:
-      "The keynote 'Autonomous Agents in High-Stakes Operations' by Dr. Aris Vance is running 8 minutes behind schedule. The delay will be absorbed in the tea break. Please acknowledge so the organizer can adjust the downstream agenda.",
-    type: "delay",
+      "The keynote 'Autonomous Agents in High-Stakes Operations' by Dr. Aris Vance is running 8 minutes behind schedule.",
+    type: "event_delay",
     createdBy: "user-organizer-1",
     senderName: "Alex Rivera",
     senderRole: "organizer",
@@ -160,8 +164,8 @@ const anchorNotifications: AnchorNotification[] = [
     title: "Message from Alex Rivera",
     message: 'Alex: "The stage lights just changed — can you confirm the cue?"',
     detailedText:
-      "Alex Rivera sent you a direct message about the stage lighting cue. Reply to coordinate the next cue.",
-    type: "announcement",
+      "Alex Rivera sent you a direct message about the stage lighting cue.",
+    type: "direct_message",
     createdBy: "user-organizer-1",
     senderName: "Alex Rivera",
     senderAvatarUrl:
@@ -188,19 +192,10 @@ const anchorNotifications: AnchorNotification[] = [
         id: "msg-2",
         senderId: "anchor",
         senderName: "You",
-        text: "Confirmed — lights are set to warm white for the keynote. Ready for the cue.",
+        text: "Confirmed — lights are set to warm white for the keynote.",
         createdAt: now - 1000 * 60 * 7,
         attachments: [],
         isOwn: true,
-      },
-      {
-        id: "msg-3",
-        senderId: "user-organizer-1",
-        senderName: "Alex Rivera",
-        text: "Perfect, thanks. I'll cue you at 09:28.",
-        createdAt: now - 1000 * 60 * 6,
-        attachments: [],
-        isOwn: false,
       },
     ],
     quickActions: [],
@@ -209,17 +204,16 @@ const anchorNotifications: AnchorNotification[] = [
     id: "nt-6",
     category: "alert",
     title: "Event Goes Live Soon",
-    message: "TechNova Live Summit 2026 goes live in 30 minutes",
-    detailedText:
-      "The TechNova Live Summit 2026 starts in 30 minutes. Please review your scripts and confirm your readiness with the organizer.",
-    type: "starting",
+    message: "TechNova Live Summit 2026 goes live in 15 minutes",
+    detailedText: "Final checklist: Scripts ready? Audio/Video working? Anchor status check!",
+    type: "event_reminder",
     createdBy: "system",
     senderName: "SmartEve",
     senderRole: "system",
     senderStatus: "online",
     eventId: "technova-2026",
     eventName: "TechNova Live Summit 2026",
-    createdAt: now - 1000 * 60 * 30,
+    createdAt: now - 1000 * 60 * 15,
     read: false,
     priority: "urgent",
     quickActions: [
@@ -233,8 +227,8 @@ const anchorNotifications: AnchorNotification[] = [
     title: "SmartEve AI Ready",
     message: "SmartEve AI has prepared suggestions for your scripts",
     detailedText:
-      "SmartEve AI has generated suggested intros and transitions for today's sessions based on the latest speaker bios. Review and approve before the event.",
-    type: "announcement",
+      "SmartEve AI has generated suggested intros and transitions for today's sessions.",
+    type: "scripts_generated",
     createdBy: "ai",
     senderName: "SmartEve AI",
     senderAvatarUrl:
@@ -246,91 +240,131 @@ const anchorNotifications: AnchorNotification[] = [
     priority: "normal",
     quickActions: [{ label: "View Suggestions", action: "view_suggestions" }],
   },
-  {
-    id: "nt-8",
-    category: "announcement",
-    title: "Announcement from Organizer",
-    message:
-      'Alex Rivera: "Welcome to the TechNova Live Summit! We have a special guest speaker joining us for the panel."',
-    detailedText:
-      "Alex Rivera announced a special guest speaker joining the executive panel. Please stay tuned for updates.",
-    type: "announcement",
-    createdBy: "user-organizer-1",
-    senderName: "Alex Rivera",
-    senderAvatarUrl:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
-    senderRole: "organizer",
-    senderStatus: "offline",
-    eventId: "technova-2026",
-    eventName: "TechNova Live Summit 2026",
-    createdAt: now - 1000 * 60 * 180,
-    read: true,
-    priority: "normal",
-    quickActions: [],
-  },
 ];
 
 export const notificationsRouter = Router();
 
 // ---------------------------------------------------------------------------
-// GET /api/anchor/notifications?filter=all&sort=newest&since=<ts>
+// 1. GET /api/notifications or /api/anchor/notifications
 // ---------------------------------------------------------------------------
-notificationsRouter.get("/", (req: Request, res: Response) => {
+notificationsRouter.get("/", async (req: Request, res: Response) => {
   try {
-    const filter =
-      (req.query.filter as string) ?? "all";
+    const filter = (req.query.filter as string) ?? "all";
     const sort = (req.query.sort as string) ?? "newest";
-    const since = req.query.since ? Number(req.query.since) : undefined;
+    const search = req.query.search as string;
+    const recipientId = (req.query.recipientId as string) || (req.query.userId as string);
+    const unreadOnly = req.query.unreadOnly === "true";
 
-    let items = [...anchorNotifications];
+    const { notifications: dbItems, unreadCount } = await getNotifications({
+      recipientId,
+      category: filter,
+      unreadOnly,
+      sort,
+      search,
+    });
 
+    // Merge in-memory anchor notifications for demo consistency
+    let combined = [...anchorNotifications];
     if (filter !== "all") {
-      items = items.filter((n) => n.category === filter);
+      combined = combined.filter((n) => n.category === filter || n.type.includes(filter));
+    }
+    if (unreadOnly) {
+      combined = combined.filter((n) => !n.read);
+    }
+    if (search) {
+      const q = search.toLowerCase();
+      combined = combined.filter((n) => n.title.toLowerCase().includes(q) || n.message.toLowerCase().includes(q));
     }
 
-    if (since && isFinite(since)) {
-      items = items.filter((n) => n.createdAt >= since);
-    }
+    const mappedDb = dbItems.map((n) => ({
+      id: n.id,
+      category: (n.notification_type.includes("invitation")
+        ? "invitation"
+        : n.notification_type.includes("message")
+        ? "message"
+        : n.notification_type.includes("delay") || n.priority === "urgent"
+        ? "alert"
+        : n.notification_type.includes("script")
+        ? "update"
+        : "announcement") as NotificationCategory,
+      title: n.title,
+      message: n.message,
+      detailedText: n.message,
+      type: n.notification_type,
+      createdBy: n.sender_id || "system",
+      senderName: n.sender_id ? "Organizer" : "SmartEve System",
+      senderRole: n.recipient_role === "anchor" ? "organizer" : "system",
+      senderStatus: "online",
+      eventId: n.event_id || "technova-2026",
+      eventName: "TechNova Live Summit 2026",
+      createdAt: new Date(n.created_at).getTime(),
+      read: n.is_read,
+      priority: n.priority || "normal",
+      quickActions: n.notification_type.includes("invitation")
+        ? [
+            { label: "Accept", action: "accept" },
+            { label: "Decline", action: "decline" },
+          ]
+        : n.priority === "urgent"
+        ? [{ label: "Acknowledge", action: "acknowledge" }]
+        : [{ label: "View", action: "view" }],
+    }));
 
-    if (sort === "newest") {
-      items.sort((a, b) => b.createdAt - a.createdAt);
-    } else if (sort === "oldest") {
-      items.sort((a, b) => a.createdAt - b.createdAt);
+    const finalNotifications = [...mappedDb, ...combined];
+    if (sort === "oldest") {
+      finalNotifications.sort((a, b) => a.createdAt - b.createdAt);
     } else if (sort === "unread") {
-      items.sort((a, b) => {
-        const ra = a.read ? 0 : 1;
-        const rb = b.read ? 0 : 1;
-        if (ra !== rb) return rb - ra;
-        return b.createdAt - a.createdAt;
-      });
+      finalNotifications.sort((a, b) => (a.read === b.read ? 0 : a.read ? 1 : -1));
     } else {
-      items.sort((a, b) => b.createdAt - a.createdAt);
+      finalNotifications.sort((a, b) => b.createdAt - a.createdAt);
     }
 
-    const unreadCount = anchorNotifications.filter((n) => !n.read).length;
+    const totalUnread = finalNotifications.filter((n) => !n.read).length;
 
     return sendSuccess(res, {
-      notifications: items,
-      unreadCount,
+      notifications: finalNotifications,
+      unreadCount: totalUnread,
     });
   } catch (err) {
-    return sendError(
-      res,
-      (err as Error).message,
-      "SERVER_ERROR",
-      500
-    );
+    return sendError(res, (err as Error).message, "SERVER_ERROR", 500);
   }
 });
 
 // ---------------------------------------------------------------------------
-// GET /api/anchor/notifications/:id
+// 2. POST /api/notifications  (Dispatch Notification)
+// ---------------------------------------------------------------------------
+notificationsRouter.post("/", async (req: Request, res: Response) => {
+  try {
+    const { recipientId, senderId, type, title, message, data, priority, eventId, actionUrl } = req.body;
+
+    if (!recipientId || !title || !message) {
+      return sendError(res, "recipientId, title and message are required", "VALIDATION_ERROR", 400);
+    }
+
+    const notificationId = await sendNotification({
+      recipientId,
+      senderId,
+      type: type || NotificationType.ANNOUNCEMENT,
+      title,
+      message,
+      data,
+      priority: priority || "medium",
+      eventId,
+      actionUrl,
+    });
+
+    return sendSuccess(res, { success: true, notificationId }, 201);
+  } catch (err) {
+    return sendError(res, (err as Error).message, "SERVER_ERROR", 500);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 3. GET /api/notifications/:id
 // ---------------------------------------------------------------------------
 notificationsRouter.get("/:id", (req: Request, res: Response) => {
   try {
-    const notif = anchorNotifications.find(
-      (n) => n.id === req.params.id
-    );
+    const notif = anchorNotifications.find((n) => n.id === req.params.id);
     if (!notif) {
       return sendError(res, "Notification not found", "NOT_FOUND", 404);
     }
@@ -339,54 +373,136 @@ notificationsRouter.get("/:id", (req: Request, res: Response) => {
       thread: notif.thread ?? [],
     });
   } catch (err) {
-    return sendError(
-      res,
-      (err as Error).message,
-      "SERVER_ERROR",
-      500
-    );
+    return sendError(res, (err as Error).message, "SERVER_ERROR", 500);
   }
 });
 
 // ---------------------------------------------------------------------------
-// POST /api/anchor/notifications/:id/read
+// 4. POST /api/notifications/:id/read
 // ---------------------------------------------------------------------------
-notificationsRouter.post("/:id/read", (req: Request, res: Response) => {
+notificationsRouter.post("/:id/read", async (req: Request, res: Response) => {
   try {
-    const idx = anchorNotifications.findIndex(
-      (n) => n.id === req.params.id
-    );
-    if (idx === -1) {
-      return sendError(res, "Notification not found", "NOT_FOUND", 404);
+    const { id } = req.params;
+    await markNotificationAsRead(id);
+
+    const idx = anchorNotifications.findIndex((n) => n.id === id);
+    if (idx !== -1) {
+      anchorNotifications[idx].read = true;
     }
-    anchorNotifications[idx].read = true;
+
     return sendSuccess(res, { success: true });
   } catch (err) {
-    return sendError(
-      res,
-      (err as Error).message,
-      "SERVER_ERROR",
-      500
-    );
+    return sendError(res, (err as Error).message, "SERVER_ERROR", 500);
   }
 });
 
 // ---------------------------------------------------------------------------
-// POST /api/anchor/notifications/mark-all-read
+// 5. POST /api/notifications/mark-all-read
 // ---------------------------------------------------------------------------
-notificationsRouter.post("/mark-all-read", (req: Request, res: Response) => {
+notificationsRouter.post("/mark-all-read", async (req: Request, res: Response) => {
   try {
+    const recipientId = (req.body.recipientId as string) || "user-anchor-1";
+    await markAllAsRead(recipientId);
+
     for (const n of anchorNotifications) {
       n.read = true;
     }
     return sendSuccess(res, { success: true });
   } catch (err) {
-    return sendError(
-      res,
-      (err as Error).message,
-      "SERVER_ERROR",
-      500
-    );
+    return sendError(res, (err as Error).message, "SERVER_ERROR", 500);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 6. DELETE /api/notifications/:id
+// ---------------------------------------------------------------------------
+notificationsRouter.delete("/:id", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    await deleteNotification(id);
+    const idx = anchorNotifications.findIndex((n) => n.id === id);
+    if (idx !== -1) {
+      anchorNotifications.splice(idx, 1);
+    }
+    return sendSuccess(res, { success: true });
+  } catch (err) {
+    return sendError(res, (err as Error).message, "SERVER_ERROR", 500);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 7. GET /api/notifications/preferences/:userId
+// ---------------------------------------------------------------------------
+notificationsRouter.get("/preferences/:userId", async (req: Request, res: Response) => {
+  try {
+    const prefs = await getPreferences(req.params.userId);
+    return sendSuccess(res, prefs);
+  } catch (err) {
+    return sendError(res, (err as Error).message, "SERVER_ERROR", 500);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 8. PUT /api/notifications/preferences/:userId
+// ---------------------------------------------------------------------------
+notificationsRouter.put("/preferences/:userId", async (req: Request, res: Response) => {
+  try {
+    const updated = await updatePreferences(req.params.userId, req.body);
+    return sendSuccess(res, updated);
+  } catch (err) {
+    return sendError(res, (err as Error).message, "SERVER_ERROR", 500);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 9. POST /api/notifications/tokens (Register FCM Device Token)
+// ---------------------------------------------------------------------------
+notificationsRouter.post("/tokens", async (req: Request, res: Response) => {
+  try {
+    const { userId, deviceId, deviceType, fcmToken } = req.body;
+    if (!userId || !deviceId || !fcmToken) {
+      return sendError(res, "userId, deviceId, and fcmToken are required", "VALIDATION_ERROR", 400);
+    }
+
+    await registerPushToken({
+      userId,
+      deviceId,
+      deviceType: deviceType || "android",
+      fcmToken,
+      isActive: true,
+    });
+
+    return sendSuccess(res, { success: true });
+  } catch (err) {
+    return sendError(res, (err as Error).message, "SERVER_ERROR", 500);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 10. POST /api/notifications/test-trigger  (Test fire any of the 25 triggers)
+// ---------------------------------------------------------------------------
+notificationsRouter.post("/test-trigger", async (req: Request, res: Response) => {
+  try {
+    const { type, recipientId, eventId, customTitle, customMessage } = req.body;
+    const targetType = type || NotificationType.ANCHOR_INVITATION;
+    const targetRecipient = recipientId || "user-anchor-1";
+
+    const title = customTitle || `Test Alert: ${targetType}`;
+    const message = customMessage || `This is a test notification for type ${targetType}.`;
+
+    const id = await sendNotification({
+      recipientId: targetRecipient,
+      senderId: "user-organizer-1",
+      type: targetType,
+      title,
+      message,
+      eventId: eventId || "technova-2026",
+      priority: targetType === NotificationType.EMERGENCY_SOS ? "urgent" : "medium",
+    });
+
+    return sendSuccess(res, { success: true, notificationId: id, type: targetType });
+  } catch (err) {
+    return sendError(res, (err as Error).message, "SERVER_ERROR", 500);
   }
 });
 
@@ -396,26 +512,16 @@ notificationsRouter.post("/mark-all-read", (req: Request, res: Response) => {
 notificationsRouter.post("/:id/reply", (req: Request, res: Response) => {
   try {
     const { replyText } = req.body as { replyText?: string };
-    const notif = anchorNotifications.find(
-      (n) => n.id === req.params.id
-    );
+    const notif = anchorNotifications.find((n) => n.id === req.params.id);
     if (!notif) {
       return sendError(res, "Notification not found", "NOT_FOUND", 404);
     }
     if (!replyText || replyText.trim().length === 0) {
-      return sendError(
-        res,
-        "Reply text is required",
-        "VALIDATION_ERROR",
-        400
-      );
+      return sendError(res, "Reply text is required", "VALIDATION_ERROR", 400);
     }
 
     const bubble: MessageBubble = {
-      id:
-        `msg-${Date.now()}-${Math.random()
-          .toString(36)
-          .slice(2, 8)}`,
+      id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       senderId: "anchor",
       senderName: "You",
       text: replyText.trim(),
@@ -440,75 +546,6 @@ notificationsRouter.post("/:id/reply", (req: Request, res: Response) => {
 
     return sendSuccess(res, { success: true, message: bubble });
   } catch (err) {
-    return sendError(
-      res,
-      (err as Error).message,
-      "SERVER_ERROR",
-      500
-    );
-  }
-});
-
-// ---------------------------------------------------------------------------
-// POST /api/anchor/notifications/broadcast  (admin -> all anchors)
-// ---------------------------------------------------------------------------
-notificationsRouter.post("/broadcast", (req: Request, res: Response) => {
-  try {
-    const body = req.body as {
-      title?: string;
-      message?: string;
-      priority?: string;
-      type?: string;
-    };
-
-    const title = body.title ?? "SmartEve Alert";
-    const message = body.message ?? "";
-    const priority = (body.priority ?? "normal") as
-      | "normal"
-      | "high"
-      | "urgent";
-
-    const notif: AnchorNotification = {
-      id: `alert-${Date.now()}-${Math.random()
-        .toString(36)
-        .slice(2, 8)}`,
-      category: "alert",
-      title,
-      message,
-      type: body.type ?? "announcement",
-      createdBy: "admin",
-      senderName: "SmartEve Admin",
-      senderRole: "admin",
-      senderStatus: "online",
-      createdAt: Date.now(),
-      read: false,
-      priority,
-      quickActions: [
-        { label: "Got it", action: "dismiss" },
-        ...(priority === "urgent"
-          ? [{ label: "Remind me later", action: "snooze" }]
-          : []),
-      ],
-    };
-
-    anchorNotifications.unshift(notif);
-
-    sendFcmNotification(notif.eventId ?? "global", {
-      id: notif.id,
-      type: "announcement",
-      message: `${title}: ${message}`,
-      createdBy: "admin",
-      createdAt: notif.createdAt,
-      priority,
-    }).catch(() => {});
-
-    return sendSuccess(res, { success: true, notification: notif }, 201);
-  } catch (err) {
-    return sendError(
-      res,
-      (err as Error).message,
-      "SERVER_ERROR",
-      500
-    );
+    return sendError(res, (err as Error).message, "SERVER_ERROR", 500);
   }
 });

@@ -12,9 +12,10 @@ import 'widgets/countdown_chip.dart';
 import 'widgets/event_info_tab.dart';
 import 'widgets/speaker_lineup_tab.dart';
 import 'widgets/agenda_overview_tab.dart';
+import 'widgets/event_scripts_tab.dart';
 import 'widgets/pre_event_checklist_tab.dart';
 
-/// Anchor-facing Event Information screen with sticky header, 4 tabs
+/// Anchor-facing Event Information screen with sticky header, 5 tabs
 /// (Info / Speakers / Agenda / Checklist), and contextual bottom actions.
 class EventPrepScreen extends StatefulWidget {
   final String eventId;
@@ -45,7 +46,7 @@ class _EventPrepScreenState extends State<EventPrepScreen>
   void initState() {
     super.initState();
     _status = widget.status;
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     // Load data after first frame.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<EventProvider>().loadEvent(widget.eventId);
@@ -345,6 +346,7 @@ class _EventPrepScreenState extends State<EventPrepScreen>
           Tab(text: 'Info'),
           Tab(text: 'Speakers'),
           Tab(text: 'Agenda'),
+          Tab(text: 'Scripts'),
           Tab(text: 'Prep ✓'),
         ],
       ),
@@ -364,6 +366,7 @@ class _EventPrepScreenState extends State<EventPrepScreen>
         )),
         _scrollable(SpeakerLineupTab(speakers: ep.speakers, agenda: ep.agenda)),
         _scrollable(AgendaOverviewTab(agenda: ep.agenda, speakers: ep.speakers)),
+        _scrollable(const EventScriptsTab()),
         _scrollable(const PreEventChecklistTab()),
       ],
     );

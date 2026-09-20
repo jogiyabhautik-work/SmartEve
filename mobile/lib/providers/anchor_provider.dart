@@ -298,6 +298,51 @@ class AnchorProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> acceptInvitation(String invitationId) async {
+    final idx = _invitations.indexWhere((i) => i.id == invitationId || i.eventId == invitationId);
+    if (idx != -1) {
+      final inv = _invitations[idx];
+      _invitations.removeAt(idx);
+      
+      _upcomingEvents.insert(0, AnchorEventCardItem(
+        id: inv.eventId,
+        title: inv.title,
+        eventType: inv.eventType,
+        date: inv.date,
+        time: inv.time,
+        organizerName: inv.organizerName,
+        collegeName: inv.collegeName,
+        status: AnchorEventStatus.accepted,
+        joinCode: 'EV26',
+        venue: inv.venue,
+        duration: '3h 00m',
+      ));
+      
+      _safeNotifyListeners();
+      
+      try {
+        await _neonService.updateInvitationStatus(inv.id, 'accepted');
+      } catch (e) {
+        debugPrint('Failed to update invitation status in DB: $e');
+      }
+    }
+  }
+
+  Future<void> declineInvitation(String invitationId) async {
+    final idx = _invitations.indexWhere((i) => i.id == invitationId || i.eventId == invitationId);
+    if (idx != -1) {
+      final inv = _invitations[idx];
+      _invitations.removeAt(idx);
+      _safeNotifyListeners();
+      
+      try {
+        await _neonService.updateInvitationStatus(inv.id, 'declined');
+      } catch (e) {
+        debugPrint('Failed to update invitation status in DB: $e');
+      }
+    }
+  }
+
   AnchorEventStatus _parseStatus(dynamic val) {
     switch (val?.toString().toLowerCase()) {
       case 'active':
@@ -321,60 +366,6 @@ class AnchorProvider extends ChangeNotifier {
   void toggleViewAllUpcoming() {
     _isViewAllUpcoming = !_isViewAllUpcoming;
     notifyListeners();
-  }
-
-  Future<void> acceptInvitation(String id) async {
-    final index = _invitations.indexWhere((inv) => inv.id == id);
-    if (index != -1) {
-      final inv = _invitations[index];
-      _invitations.removeAt(index);
-
-      // Add to upcoming events as 'accepted'
-      _upcomingEvents.insert(
-        0,
-        AnchorEventCardItem(
-          id: inv.eventId,
-          title: inv.title,
-          eventType: inv.eventType,
-          date: inv.date,
-          time: inv.time,
-          organizerName: inv.organizerName,
-          collegeName: inv.collegeName,
-          status: AnchorEventStatus.accepted,
-          joinCode: 'EV26',
-          venue: inv.venue,
-          duration: 'TBD',
-        ),
-      );
-      notifyListeners();
-
-      try {
-        final res = await _apiClient.post('/anchor/invitations/$id/accept', {});
-        if (!res.success) {
-          await _neonService.updateInvitationStatus(id, 'accepted');
-        }
-      } catch (_) {
-        try {
-          await _neonService.updateInvitationStatus(id, 'accepted');
-        } catch (_) {}
-      }
-    }
-  }
-
-  Future<void> declineInvitation(String id) async {
-    _invitations.removeWhere((inv) => inv.id == id);
-    notifyListeners();
-
-    try {
-      final res = await _apiClient.post('/anchor/invitations/$id/decline', {});
-      if (!res.success) {
-        await _neonService.updateInvitationStatus(id, 'rejected');
-      }
-    } catch (_) {
-      try {
-        await _neonService.updateInvitationStatus(id, 'rejected');
-      } catch (_) {}
-    }
   }
 
   void clearAiAlerts() {

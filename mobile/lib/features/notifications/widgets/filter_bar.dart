@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/notification_model.dart';
 
@@ -14,16 +14,27 @@ class NotificationFilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final categories = [
+      NotificationCategory.all,
+      NotificationCategory.invitation,
+      NotificationCategory.message,
+      NotificationCategory.update,
+      NotificationCategory.alert,
+      NotificationCategory.reminder,
+    ];
+
     return SizedBox(
       height: 38,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        itemCount: NotificationCategory.values.length,
+        itemCount: categories.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
-          final cat = NotificationCategory.values[index];
+          final cat = categories[index];
           final isSelected = cat == selected;
+          final catColor = NotificationCategory.badgeColorFor(cat);
+
           return Material(
             color: Colors.transparent,
             child: InkWell(
@@ -33,27 +44,36 @@ class NotificationFilterBar extends StatelessWidget {
                 duration: const Duration(milliseconds: 180),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppTheme.primaryBlue : AppTheme.surfaceLight,
+                  color: isSelected ? catColor : AppTheme.surfaceLight,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isSelected ? AppTheme.primaryBlue : AppTheme.border,
+                    color: isSelected ? catColor : AppTheme.border,
                     width: isSelected ? 1.5 : 1,
                   ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: catColor.withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          )
+                        ]
+                      : null,
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      _iconFor(cat),
+                      NotificationCategory.iconFor(cat),
                       size: 14,
-                      color: isSelected ? Colors.white : AppTheme.textSecondary,
+                      color: isSelected ? Colors.white : catColor,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       cat.label,
                       style: TextStyle(
                         fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                         color: isSelected ? Colors.white : AppTheme.textPrimary,
                       ),
                     ),
@@ -65,17 +85,5 @@ class NotificationFilterBar extends StatelessWidget {
         },
       ),
     );
-  }
-
-  IconData _iconFor(NotificationCategory cat) {
-    return switch (cat) {
-      NotificationCategory.invitation => Icons.card_membership_rounded,
-      NotificationCategory.update => Icons.refresh_rounded,
-      NotificationCategory.announcement => Icons.campaign_rounded,
-      NotificationCategory.message => Icons.chat_bubble_outline_rounded,
-      NotificationCategory.alert => Icons.warning_amber_rounded,
-      NotificationCategory.smartEveAi => Icons.auto_awesome_rounded,
-      NotificationCategory.all => Icons.inbox_rounded,
-    };
   }
 }

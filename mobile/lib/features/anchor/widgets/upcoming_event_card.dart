@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../models/anchor_dashboard_models.dart';
 import '../../events/event_prep_screen.dart';
-import '../../live_dashboard/live_dashboard_screen.dart';
-
 class UpcomingEventCard extends StatelessWidget {
   final AnchorEventCardItem event;
 
@@ -212,23 +210,16 @@ class UpcomingEventCard extends StatelessWidget {
   }
 
   void _navigateToDetails(BuildContext context) {
-    if (event.status == AnchorEventStatus.active) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => LiveDashboardScreen(eventId: event.id)),
-      );
-    } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => EventPrepScreen(
-            eventId: event.id,
-            status: event.status,
-            organizerName: event.organizerName,
-            collegeName: event.collegeName,
-          ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EventPrepScreen(
+          eventId: event.id,
+          status: event.status,
+          organizerName: event.organizerName,
+          collegeName: event.collegeName,
         ),
-      );
-    }
+      ),
+    );
   }
 }

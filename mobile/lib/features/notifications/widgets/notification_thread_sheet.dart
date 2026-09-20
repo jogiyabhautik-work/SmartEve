@@ -62,9 +62,8 @@ class _NotificationThreadSheetState extends State<NotificationThreadSheet> {
     return switch (cat) {
       NotificationCategory.invitation => Icons.card_membership_rounded,
       NotificationCategory.update => Icons.refresh_rounded,
-      NotificationCategory.announcement => Icons.campaign_rounded,
       NotificationCategory.message => Icons.chat_bubble_outline_rounded,
-      NotificationCategory.alert => Icons.warning_amber_rounded,
+      NotificationCategory.alert => Icons.campaign_rounded,
       NotificationCategory.smartEveAi => Icons.auto_awesome_rounded,
       _ => Icons.info_outline_rounded,
     };

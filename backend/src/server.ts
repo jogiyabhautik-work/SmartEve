@@ -57,6 +57,7 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/anchor", anchorRouter);
 app.use("/api/anchor", notificationsRouter);
+app.use("/api/notifications", notificationsRouter);
 app.use("/api/events", eventsRouter);
 app.use("/api/events", agendaRouter);
 app.use("/api/events", speakersRouter);

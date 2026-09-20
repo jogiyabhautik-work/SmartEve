@@ -1,39 +1,64 @@
 import 'package:flutter/foundation.dart';
 import '../core/network/api_client.dart';
 import '../models/notification_model.dart';
+import '../core/services/neon_database_service.dart';
 
 class NotificationProvider extends ChangeNotifier {
   final ApiClient _apiClient = ApiClient();
+  final NeonDatabaseService _neonService = NeonDatabaseService();
+
   List<NotificationModel> _notifications = [];
   bool _isLoading = false;
   String _filter = 'all';
   String _sort = 'newest';
+  String _searchQuery = '';
+  bool _unreadOnly = false;
   int _unreadCount = 0;
   String? _statusMessage;
+  NotificationPreferences _preferences = const NotificationPreferences(userId: 'user-anchor-1');
 
   List<NotificationModel> get notifications => _notifications;
   bool get isLoading => _isLoading;
   String get filter => _filter;
   String get sort => _sort;
+  String get searchQuery => _searchQuery;
+  bool get unreadOnly => _unreadOnly;
   int get unreadCount => _unreadCount;
   String? get statusMessage => _statusMessage;
+  NotificationPreferences get preferences => _preferences;
 
   List<NotificationModel> get filtered {
-    List<NotificationModel> items;
-    if (_filter == 'all') {
-      items = List.of(_notifications);
-    } else {
-      final cat = NotificationCategory.fromString(_filter);
-      if (cat == null) {
-        items = List.of(_notifications);
-      } else {
-        items = _notifications.where((n) {
-          final ncat = NotificationCategory.fromString(n.category ?? '');
-          return ncat == cat;
+    List<NotificationModel> items = List.of(_notifications.where((n) => !n.isArchived));
+
+    // Category Filter
+    if (_filter != 'all') {
+      final targetCat = NotificationCategory.fromString(_filter);
+      if (targetCat != null) {
+        items = items.where((n) {
+          final cat = NotificationCategory.fromString(n.category ?? n.type);
+          return cat == targetCat;
         }).toList();
       }
     }
-    // Client-side sort guarantees correct order even with cached data.
+
+    // Unread Only Filter
+    if (_unreadOnly) {
+      items = items.where((n) => !n.read).toList();
+    }
+
+    // Search Filter
+    if (_searchQuery.trim().isNotEmpty) {
+      final q = _searchQuery.trim().toLowerCase();
+      items = items.where((n) {
+        final title = (n.title ?? '').toLowerCase();
+        final msg = n.message.toLowerCase();
+        final sender = (n.senderName ?? '').toLowerCase();
+        final event = (n.eventName ?? '').toLowerCase();
+        return title.contains(q) || msg.contains(q) || sender.contains(q) || event.contains(q);
+      }).toList();
+    }
+
+    // Sorting
     switch (_sort) {
       case 'oldest':
         items.sort((a, b) => a.createdAt.compareTo(b.createdAt));
@@ -50,10 +75,11 @@ class NotificationProvider extends ChangeNotifier {
       default:
         items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     }
+
     return items;
   }
 
-  Future<void> load() async {
+  Future<void> load({String? userId}) async {
     _isLoading = true;
     notifyListeners();
     try {
@@ -65,6 +91,10 @@ class NotificationProvider extends ChangeNotifier {
             .toList() ?? [];
         _unreadCount = (data['unreadCount'] as num?)?.toInt() ?? _notifications.where((n) => !n.read).length;
       }
+
+      if (userId != null && userId.isNotEmpty) {
+        await loadPreferences(userId);
+      }
     } catch (e) {
       _statusMessage = e.toString();
     } finally {
@@ -75,12 +105,22 @@ class NotificationProvider extends ChangeNotifier {
 
   Future<void> setFilter(String f) async {
     _filter = f;
-    await load();
+    notifyListeners();
   }
 
   Future<void> setSort(String s) async {
     _sort = s;
-    await load();
+    notifyListeners();
+  }
+
+  void setSearchQuery(String query) {
+    _searchQuery = query;
+    notifyListeners();
+  }
+
+  void toggleUnreadOnly() {
+    _unreadOnly = !_unreadOnly;
+    notifyListeners();
   }
 
   Future<void> markRead(String id) async {
@@ -101,6 +141,52 @@ class NotificationProvider extends ChangeNotifier {
     try {
       await _apiClient.post('/anchor/notifications/mark-all-read', {});
     } catch (_) {}
+  }
+
+  Future<void> deleteNotification(String id) async {
+    _notifications.removeWhere((n) => n.id == id);
+    _unreadCount = _notifications.where((n) => !n.read).length;
+    notifyListeners();
+    try {
+      await _apiClient.delete('/notifications/$id');
+    } catch (_) {}
+  }
+
+  Future<void> archiveNotification(String id) async {
+    final idx = _notifications.indexWhere((n) => n.id == id);
+    if (idx == -1) return;
+    _notifications[idx] = _notifications[idx].copyWith(isArchived: true);
+    _unreadCount = _notifications.where((n) => !n.read && !n.isArchived).length;
+    notifyListeners();
+  }
+
+  Future<void> loadPreferences(String userId) async {
+    try {
+      final res = await _apiClient.get('/notifications/preferences/$userId');
+      if (res.success && res.data != null) {
+        _preferences = NotificationPreferences.fromJson(res.data as Map<String, dynamic>);
+        notifyListeners();
+        return;
+      }
+      final neonMap = await _neonService.getNotificationPreferences(userId);
+      if (neonMap != null) {
+        _preferences = NotificationPreferences.fromJson(neonMap);
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint("Load preferences error: $e");
+    }
+  }
+
+  Future<void> updatePreferences(NotificationPreferences newPrefs) async {
+    _preferences = newPrefs;
+    notifyListeners();
+    try {
+      await _apiClient.put('/notifications/preferences/${newPrefs.userId}', newPrefs.toJson());
+      await _neonService.saveNotificationPreferences(newPrefs.userId, newPrefs.toJson());
+    } catch (e) {
+      debugPrint("Update preferences error: $e");
+    }
   }
 
   NotificationModel? _threadNotification;

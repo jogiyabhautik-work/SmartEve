@@ -223,6 +223,96 @@ CREATE TABLE IF NOT EXISTS anchor_checklist_items (
     UNIQUE(event_id, anchor_id, item_key)
 );
 
+-- ==================== 14. NOTIFICATIONS SYSTEM TABLES ====================
+CREATE TABLE IF NOT EXISTS notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    recipient_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    sender_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    notification_type VARCHAR(50) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    data JSONB DEFAULT '{}'::jsonb,
+    recipient_role VARCHAR(20),
+    is_read BOOLEAN DEFAULT FALSE,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    read_at TIMESTAMP NULL,
+    action_url VARCHAR(500),
+    action_type VARCHAR(50),
+    priority priority_level DEFAULT 'medium',
+    event_id UUID REFERENCES events(id) ON DELETE CASCADE,
+    anchor_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    organizer_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    speaker_id UUID REFERENCES speakers(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NULL,
+    scheduled_for TIMESTAMP NULL
+);
+
+CREATE TABLE IF NOT EXISTS push_notification_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    device_id VARCHAR(255) UNIQUE NOT NULL,
+    device_type VARCHAR(20) NOT NULL DEFAULT 'android',
+    fcm_token VARCHAR(500) NOT NULL UNIQUE,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_used_at TIMESTAMP NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS notification_preferences (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    push_enabled BOOLEAN DEFAULT TRUE,
+    in_app_enabled BOOLEAN DEFAULT TRUE,
+    email_enabled BOOLEAN DEFAULT TRUE,
+    invitations_enabled BOOLEAN DEFAULT TRUE,
+    messages_enabled BOOLEAN DEFAULT TRUE,
+    updates_enabled BOOLEAN DEFAULT TRUE,
+    announcements_enabled BOOLEAN DEFAULT TRUE,
+    alerts_enabled BOOLEAN DEFAULT TRUE,
+    reminders_enabled BOOLEAN DEFAULT TRUE,
+    sound_enabled BOOLEAN DEFAULT TRUE,
+    vibration_enabled BOOLEAN DEFAULT TRUE,
+    quiet_hours_enabled BOOLEAN DEFAULT FALSE,
+    quiet_hours_start TIME DEFAULT '22:00:00',
+    quiet_hours_end TIME DEFAULT '07:00:00',
+    quiet_hours_timezone VARCHAR(50) DEFAULT 'UTC',
+    daily_digest_enabled BOOLEAN DEFAULT FALSE,
+    digest_time TIME DEFAULT '09:00:00',
+    push_for_invitations BOOLEAN DEFAULT TRUE,
+    push_for_messages BOOLEAN DEFAULT TRUE,
+    push_for_urgent_alerts BOOLEAN DEFAULT TRUE,
+    push_for_event_reminders BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS notification_read_status (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    notification_id UUID NOT NULL REFERENCES notifications(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    is_read BOOLEAN DEFAULT FALSE,
+    read_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(notification_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS notifications_archive (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    original_notification_id UUID,
+    recipient_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    sender_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    notification_type VARCHAR(50),
+    title VARCHAR(255),
+    message TEXT,
+    data JSONB,
+    action_url VARCHAR(500),
+    event_id UUID REFERENCES events(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    archived_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- ==================== INDEXES ====================
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_firebase_uid ON users(firebase_uid);
@@ -241,3 +331,10 @@ CREATE INDEX IF NOT EXISTS idx_event_timeline_event_id ON event_timeline_updates
 CREATE INDEX IF NOT EXISTS idx_event_logs_event_id ON event_logs(event_id);
 CREATE INDEX IF NOT EXISTS idx_anchor_checklist_event_id ON anchor_checklist_items(event_id);
 CREATE INDEX IF NOT EXISTS idx_anchor_checklist_anchor_id ON anchor_checklist_items(anchor_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_recipient_id ON notifications(recipient_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_type ON notifications(notification_type);
+CREATE INDEX IF NOT EXISTS idx_notifications_event_id ON notifications(event_id);
+CREATE INDEX IF NOT EXISTS idx_push_tokens_user_id ON push_notification_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_notification_prefs_user ON notification_preferences(user_id);

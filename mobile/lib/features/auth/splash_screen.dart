@@ -47,8 +47,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         final role = user.role.toLowerCase();
         if (role == 'anchor' || role == 'host' || role == 'mc' || role == 'emcee' || role == 'stage_host') {
           destination = const AnchorDashboardScreen();
-        } else if (role == 'admin') {
-          destination = const AdminDashboardScreen();
         } else if (role == 'attendee') {
           destination = const AttendeeScreen();
         } else {
