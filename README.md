@@ -1,6 +1,8 @@
 # 🚀 SmartEve & Stage Flow
 ### *"Plan Smart. Host Better."*
 
+📊 **[Presentation Template (PPTX)](./mobile/SmartEve_AI_BIT_N_BUILD_26_PROFESSIONAL_TEMPLATE.pptx)**
+
 > **SmartEve** is an enterprise-grade live event coordination and stage management platform featuring a deterministic schedule reflow engine, real-time multi-device synchronization, direct Neon PostgreSQL database integration, a complete multi-role notification system (Anchor/Host & Organizer), quad-tier fail-safe AI anchor assistance, and a modern light-themed UI.
 
 ---
