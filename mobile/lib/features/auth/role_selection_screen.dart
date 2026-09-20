@@ -9,6 +9,8 @@ import '../../core/services/firebase_service.dart';
 import '../dashboard/stagepilot_dashboard_screen.dart';
 import '../anchor/anchor_teleprompter_screen.dart';
 import '../stage_display/stage_display_screen.dart';
+import '../organizer/screens/organizer_dashboard_screen.dart';
+import '../admin/admin_dashboard_screen.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
@@ -167,20 +169,29 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               ),
               const SizedBox(height: 14),
 
-              // Role 1: StagePilot AI Dashboard
+              // Role 1: Organizer Portal
               _buildRoleCard(
-                icon: Icons.dashboard_rounded,
-                title: 'StagePilot AI Suite',
-                subtitle: 'Event Dashboard, Agenda, Speakers, AI Assistant & Settings',
-                badgeText: 'FULL DASHBOARD',
+                icon: Icons.dashboard_customize_rounded,
+                title: 'Organizer Portal',
+                subtitle: 'Manage events, create new events, speaker roster & publish to anchors',
+                badgeText: 'ORGANIZER',
+                badgeColor: AppTheme.primaryBlue,
+                onTap: () => _navigateTo(const OrganizerDashboardScreen()),
+              ),
+              const SizedBox(height: 14),
+
+              // Role 2: StagePilot AI Suite
+              _buildRoleCard(
+                icon: Icons.tune_rounded,
+                title: 'Control Room Suite',
+                subtitle: 'Live session timers, schedule reflow engine & AI assistant',
+                badgeText: 'CONTROL ROOM',
                 badgeColor: AppTheme.primaryPurple,
                 onTap: () => _navigateTo(const StagePilotDashboardScreen()),
               ),
               const SizedBox(height: 14),
 
-              // Role 2: Organizer Control Room
-
-              // Role 2: Anchor Teleprompter
+              // Role 3: Anchor Teleprompter
               _buildRoleCard(
                 icon: Icons.mic_external_on_rounded,
                 title: 'Anchor Teleprompter',
@@ -191,7 +202,18 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               ),
               const SizedBox(height: 14),
 
-              // Role 3: Public Stage Display
+              // Role 4: Admin Hub
+              _buildRoleCard(
+                icon: Icons.admin_panel_settings_rounded,
+                title: 'Admin Control Center',
+                subtitle: 'Platform oversight, user management & AI model fallback config',
+                badgeText: 'ADMIN',
+                badgeColor: AppTheme.primaryPurple,
+                onTap: () => _navigateTo(const AdminDashboardScreen()),
+              ),
+              const SizedBox(height: 14),
+
+              // Role 5: Public Stage Display
               _buildRoleCard(
                 icon: Icons.cast_connected_rounded,
                 title: 'Stage Projector Display',

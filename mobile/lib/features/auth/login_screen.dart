@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
-import '../dashboard/stagepilot_dashboard_screen.dart';
 import '../anchor/anchor_teleprompter_screen.dart';
+import '../organizer/screens/organizer_dashboard_screen.dart';
+import '../admin/admin_dashboard_screen.dart';
 import 'role_selection_screen.dart';
 import 'widgets/auth_text_field.dart';
 import 'widgets/auth_button.dart';
@@ -63,24 +64,12 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _handleDemoLogin(String role) async {
-    setState(() => _isLoading = true);
-    try {
-      final user = await AuthService().demoLogin(role);
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      _redirectUser(user.role);
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-    }
-  }
-
   void _redirectUser(String role) {
-    if (role.toLowerCase() == 'anchor') {
+    final lowerRole = role.toLowerCase();
+    if (lowerRole == 'anchor' || lowerRole == 'host') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('👋 Welcome back, Anchor! Opening your teleprompter...'),
+          content: Text('👋 Welcome back, Anchor! Opening stage teleprompter...'),
           backgroundColor: AppTheme.liveGreen,
           duration: Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
@@ -92,18 +81,33 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         (route) => false,
       );
-    } else {
+    } else if (lowerRole == 'admin') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('👋 Welcome back, Organizer! Opening StagePilot Dashboard...'),
-          backgroundColor: AppTheme.liveGreen,
+          content: Text('⚡ Welcome back, Admin! Opening Admin Control Center...'),
+          backgroundColor: AppTheme.primaryPurple,
           duration: Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
       );
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (context) => const StagePilotDashboardScreen(),
+          builder: (context) => const AdminDashboardScreen(),
+        ),
+        (route) => false,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('👋 Welcome back, Organizer! Opening Organizer Portal...'),
+          backgroundColor: AppTheme.primaryBlue,
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => const OrganizerDashboardScreen(),
         ),
         (route) => false,
       );
@@ -188,11 +192,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () async {
                         if (resetFormKey.currentState!.validate()) {
                           setModalState(() => isSending = true);
+                          final messenger = ScaffoldMessenger.of(context);
                           try {
                             await AuthService().sendPasswordResetEmail(resetEmailController.text);
-                            if (!mounted) return;
-                            Navigator.pop(ctx);
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            if (ctx.mounted) {
+                              Navigator.pop(ctx);
+                            }
+                            messenger.showSnackBar(
                               SnackBar(
                                 content: Row(
                                   children: [
@@ -212,7 +218,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             );
                           } catch (err) {
                             setModalState(() => isSending = false);
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            messenger.showSnackBar(
                               SnackBar(
                                 content: Text(err.toString().replaceAll('Exception: ', '')),
                                 backgroundColor: AppTheme.dangerRose,
@@ -329,58 +335,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: _handleLogin,
                   isLoading: _isLoading,
                 ),
-                const SizedBox(height: 28),
-                const Row(
-                  children: [
-                    Expanded(child: Divider(color: AppTheme.border)),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'QUICK DEMO ACCESS',
-                        style: TextStyle(
-                          color: AppTheme.textMuted,
-                          fontSize: 11,
-                          letterSpacing: 1.2,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    Expanded(child: Divider(color: AppTheme.border)),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.dashboard_customize_rounded, size: 16, color: AppTheme.primaryBlue),
-                        label: const Text('Organizer', style: TextStyle(fontSize: 12, color: AppTheme.primaryBlue, fontWeight: FontWeight.bold)),
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: AppTheme.surface,
-                          side: BorderSide(color: AppTheme.primaryBlue.withValues(alpha: 0.4)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        onPressed: () => _handleDemoLogin('organizer'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.mic_external_on_rounded, size: 16, color: AppTheme.liveGreen),
-                        label: const Text('Anchor', style: TextStyle(fontSize: 12, color: AppTheme.liveGreen, fontWeight: FontWeight.bold)),
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: AppTheme.surface,
-                          side: BorderSide(color: AppTheme.liveGreen.withValues(alpha: 0.4)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        onPressed: () => _handleDemoLogin('anchor'),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 20),
                 OutlinedButton.icon(
                   icon: const Icon(Icons.qr_code_rounded, size: 16, color: AppTheme.textSecondary),
                   label: const Text('Join with Event Code (e.g. TN26)', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),

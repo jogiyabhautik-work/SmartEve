@@ -27,7 +27,14 @@ class _AnchorTeleprompterScreenState extends State<AnchorTeleprompterScreen> {
   void initState() {
     super.initState();
     _ttsService.init();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final provider = context.read<EventProvider>();
+      if (provider.event == null) {
+        await provider.fetchOrganizerEvents();
+        if (provider.organizerEvents.isNotEmpty) {
+          provider.selectEvent(provider.organizerEvents.first);
+        }
+      }
       _generateScript('speaker_intro');
     });
   }
