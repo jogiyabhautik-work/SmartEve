@@ -42,7 +42,7 @@ export async function callOpenRouter(ctx: ScriptContext, timeoutMs = 4500): Prom
       throw new Error(`OpenRouter API error ${response.status}: ${errText}`);
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as any;
     const content = data.choices?.[0]?.message?.content;
     if (!content) {
       throw new Error("OpenRouter returned empty response");

@@ -1,0 +1,8 @@
+☁️ Cloudinary SDK configured successfully
+🐘 Neon.tech PostgreSQL connection pool initialized
+=========================================
+⚡ SmartEve / Smart Anchor Backend Engine Running
+📡 URL: http://localhost:4000
+🎯 Health check: http://localhost:4000/api/health
+📱 Flutter Mobile API base: http://10.0.2.2:4000/api (Android Emulator)
+=========================================

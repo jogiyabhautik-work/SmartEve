@@ -77,6 +77,32 @@ class FirebaseService {
     );
   }
 
+  Future<void> showForegroundNotification(
+      {required String title, required String body}) async {
+    const androidDetails = AndroidNotificationDetails(
+      'smarteve_alerts',
+      'SmartEve Alerts',
+      channelDescription: 'Event updates, messages and urgent alerts',
+      importance: Importance.max,
+      priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
+    );
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+    const platformDetails =
+        NotificationDetails(android: androidDetails, iOS: iosDetails);
+    await _localNotifications.show(
+      Random().nextInt(100000),
+      title,
+      body,
+      platformDetails,
+    );
+  }
+
   Future<void> _setupFcm() async {
     try {
       final messaging = FirebaseMessaging.instance;
@@ -90,10 +116,15 @@ class FirebaseService {
         _fcmToken = await messaging.getToken();
         debugPrint("📱 FCM Token: $_fcmToken");
 
-        // Listen for foreground notifications
+        // Listen for foreground notifications: banner + sound + vibration
+        // (enabled by default; toggled in profile notification settings)
         FirebaseMessaging.onMessage.listen((RemoteMessage message) {
           debugPrint("📢 Foreground FCM Alert: ${message.notification?.title} - ${message.notification?.body}");
           _notificationStreamController.add(message);
+          showForegroundNotification(
+            title: message.notification?.title ?? 'SmartEve',
+            body: message.notification?.body ?? 'You have a new update',
+          );
         });
       }
     } catch (e) {

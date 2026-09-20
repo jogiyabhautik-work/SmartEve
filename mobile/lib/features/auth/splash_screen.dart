@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/services/auth_service.dart';
+import '../anchor/anchor_dashboard_screen.dart';
+import '../dashboard/stagepilot_dashboard_screen.dart';
 import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -32,20 +35,43 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller.forward();
 
-    // Transition to Login after 3 seconds
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const LoginScreen(),
-            transitionsBuilder: (_, animation, __, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            transitionDuration: const Duration(milliseconds: 500),
-          ),
-        );
+    _initAppAndRoute();
+  }
+
+  Future<void> _initAppAndRoute() async {
+    // Concurrently await branded splash timing and session restoration
+    final results = await Future.wait([
+      Future.delayed(const Duration(milliseconds: 1800)),
+      AuthService().restoreSession(),
+    ]);
+
+    if (!mounted) return;
+
+    final user = results[1] as AppUser?;
+    Widget destination;
+
+    if (user != null) {
+      if (user.role.toLowerCase() == 'anchor') {
+        debugPrint("🚀 [Splash] Session active: routing Anchor (${user.fullName}) to AnchorDashboardScreen");
+        destination = const AnchorDashboardScreen();
+      } else {
+        debugPrint("🚀 [Splash] Session active: routing Organizer (${user.fullName}) to StagePilotDashboardScreen");
+        destination = const StagePilotDashboardScreen();
       }
-    });
+    } else {
+      debugPrint("ℹ️ [Splash] No active session: opening LoginScreen");
+      destination = const LoginScreen();
+    }
+
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => destination,
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 500),
+      ),
+    );
   }
 
   @override

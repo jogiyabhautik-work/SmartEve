@@ -87,4 +87,26 @@ class ApiClient {
       return ApiResponse(success: false, errorMessage: e.toString());
     }
   }
+
+  Future<ApiResponse<dynamic>> patch(String path, Map<String, dynamic> data) async {
+    try {
+      final uri = Uri.parse('$baseUrl$path');
+      final headers = await _getHeaders();
+      final response = await _client.patch(
+        uri,
+        headers: headers,
+        body: jsonEncode(data),
+      ).timeout(const Duration(seconds: 8));
+
+      final body = jsonDecode(response.body);
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return ApiResponse(success: true, data: body['data']);
+      } else {
+        final err = body['error']?['message'] ?? 'Request failed with status ${response.statusCode}';
+        return ApiResponse(success: false, errorMessage: err);
+      }
+    } catch (e) {
+      return ApiResponse(success: false, errorMessage: e.toString());
+    }
+  }
 }

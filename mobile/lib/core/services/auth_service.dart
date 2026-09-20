@@ -1,7 +1,10 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:uuid/uuid.dart';
 import '../network/api_client.dart';
+import '../theme/app_theme.dart';
+import '../../features/auth/login_screen.dart';
 import 'neon_database_service.dart';
 import '../../features/auth/models/registration_data.dart';
 
@@ -28,15 +31,240 @@ class AuthService {
   factory AuthService() => _instance;
   AuthService._internal();
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  static const String _prefSessionActive = 'smarteve_session_active';
+  static const String _prefUid = 'smarteve_uid';
+  static const String _prefEmail = 'smarteve_email';
+  static const String _prefFullName = 'smarteve_fullname';
+  static const String _prefRole = 'smarteve_role';
+  static const String _prefNeonId = 'smarteve_neon_id';
+
+  FirebaseAuth? _authInstance;
+  FirebaseAuth get _auth => _authInstance ??= FirebaseAuth.instance;
   final ApiClient _apiClient = ApiClient();
   final NeonDatabaseService _neonDb = NeonDatabaseService();
 
   AppUser? _currentAppUser;
   AppUser? get currentAppUser => _currentAppUser;
   String get currentUserRole => _currentAppUser?.role ?? 'organizer';
-  User? get currentUser => _auth.currentUser;
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
+  User? get currentUser {
+    try {
+      return _auth.currentUser;
+    } catch (_) {
+      return null;
+    }
+  }
+  Stream<User?> get authStateChanges {
+    try {
+      return _auth.authStateChanges();
+    } catch (_) {
+      return const Stream.empty();
+    }
+  }
+
+  Future<void> _persistSession(AppUser user) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_prefSessionActive, true);
+      await prefs.setString(_prefUid, user.uid);
+      await prefs.setString(_prefEmail, user.email);
+      await prefs.setString(_prefFullName, user.fullName);
+      await prefs.setString(_prefRole, user.role.toLowerCase());
+      if (user.neonId != null && user.neonId!.isNotEmpty) {
+        await prefs.setString(_prefNeonId, user.neonId!);
+      } else {
+        await prefs.remove(_prefNeonId);
+      }
+      debugPrint("💾 [Session] Persisted ${user.role} session for ${user.email}");
+    } catch (e) {
+      debugPrint("⚠️ [Session] Failed to persist session: $e");
+    }
+  }
+
+  Future<void> _clearPersistedSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_prefSessionActive);
+      await prefs.remove(_prefUid);
+      await prefs.remove(_prefEmail);
+      await prefs.remove(_prefFullName);
+      await prefs.remove(_prefRole);
+      await prefs.remove(_prefNeonId);
+      debugPrint("🧹 [Session] Cleared local session");
+    } catch (e) {
+      debugPrint("⚠️ [Session] Failed to clear local session: $e");
+    }
+  }
+
+  /// Restores active session on app startup / reopen
+  Future<AppUser?> restoreSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final isActive = prefs.getBool(_prefSessionActive) ?? false;
+      final savedEmail = prefs.getString(_prefEmail);
+
+      // 1. Check local persistent storage first
+      if (isActive && savedEmail != null && savedEmail.isNotEmpty) {
+        final uid = prefs.getString(_prefUid) ?? 'user_restored';
+        final fullName = prefs.getString(_prefFullName) ?? savedEmail.split('@').first;
+        String role = prefs.getString(_prefRole) ?? 'organizer';
+        final neonId = prefs.getString(_prefNeonId);
+
+        // Attempt non-blocking refresh of role from Neon/Supabase DB
+        try {
+          final neonUser = await _neonDb.getUserByEmail(savedEmail);
+          if (neonUser != null && neonUser['role'] != null) {
+            role = neonUser['role'].toString().toLowerCase();
+            await prefs.setString(_prefRole, role);
+          }
+        } catch (_) {}
+
+        _currentAppUser = AppUser(
+          uid: uid,
+          email: savedEmail,
+          fullName: fullName,
+          role: role,
+          neonId: neonId,
+        );
+        debugPrint("🚀 [Session] Restored active session: ${_currentAppUser!.fullName} (${_currentAppUser!.role})");
+        return _currentAppUser;
+      }
+
+      // 2. Check Firebase Auth if local prefs was empty but Firebase user is active
+      User? firebaseUser;
+      try {
+        firebaseUser = _auth.currentUser;
+      } catch (_) {}
+
+      if (firebaseUser != null && firebaseUser.email != null) {
+        final email = firebaseUser.email!.trim().toLowerCase();
+        String fullName = email.split('@').first;
+        String? neonId;
+        String role = 'organizer';
+
+        final rawDisplayName = firebaseUser.displayName ?? '';
+        if (rawDisplayName.contains('|')) {
+          final parts = rawDisplayName.split('|');
+          if (parts.isNotEmpty && parts[0].isNotEmpty) fullName = parts[0];
+          if (parts.length > 1 && parts[1].isNotEmpty) neonId = parts[1];
+          if (parts.length > 2 && parts[2].isNotEmpty) role = parts[2].toLowerCase();
+        } else if (rawDisplayName.isNotEmpty) {
+          fullName = rawDisplayName;
+        }
+
+        // Verify with Neon DB
+        try {
+          final neonUser = await _neonDb.getUserByEmail(email);
+          if (neonUser != null && neonUser['role'] != null) {
+            role = neonUser['role'].toString().toLowerCase();
+            neonId = neonUser['id']?.toString() ?? neonId;
+            fullName = neonUser['full_name']?.toString() ?? fullName;
+          }
+        } catch (_) {}
+
+        _currentAppUser = AppUser(
+          uid: firebaseUser.uid,
+          email: email,
+          fullName: fullName,
+          role: role,
+          neonId: neonId,
+        );
+
+        await _persistSession(_currentAppUser!);
+        debugPrint("🚀 [Session] Restored Firebase Auth session: ${_currentAppUser!.fullName} (${_currentAppUser!.role})");
+        return _currentAppUser;
+      }
+
+      return null;
+    } catch (e) {
+      debugPrint("⚠️ [Session] Error restoring session: $e");
+      return null;
+    }
+  }
+
+  /// Displays a logout confirmation dialog. Upon confirmation, signs out and redirects to LoginScreen.
+  Future<bool> confirmSignOut(BuildContext context) async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: AppTheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.logout_rounded, color: AppTheme.error, size: 24),
+              SizedBox(width: 10),
+              Text(
+                'Confirm Logout',
+                style: TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'Are you sure you want to log out of SmartEve? You will need to sign in again to access your live stage dashboard.',
+            style: TextStyle(
+              color: AppTheme.textSecondary,
+              fontSize: 14,
+              height: 1.4,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.error,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              ),
+              child: const Text(
+                'Log Out',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldLogout == true) {
+      await signOut();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Logged out successfully.'),
+            backgroundColor: AppTheme.primaryBlue,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
+      }
+      return true;
+    }
+    return false;
+  }
 
   bool _isConfigError(dynamic e) {
     final str = e.toString().toUpperCase();
@@ -147,11 +375,11 @@ class AuthService {
     }
 
     // STEP 3: After saving in Neon Tech, save the Neon UUID back into Firebase user profile
-    if (credential != null && credential.user != null && neonId != null) {
+    if (credential != null && credential.user != null) {
       try {
-        final displayNameWithNeon = "$cleanName|$neonId";
+        final displayNameWithNeon = "$cleanName|${neonId ?? ''}|organizer";
         await credential.user!.updateDisplayName(displayNameWithNeon);
-        debugPrint("✅ [3/3] Saved Neon UUID ($neonId) into Firebase user displayName: $displayNameWithNeon");
+        debugPrint("✅ [3/3] Saved Neon UUID ($neonId) and role (organizer) into Firebase user displayName: $displayNameWithNeon");
       } catch (e) {
         debugPrint("⚠️ Could not update Firebase display name: $e");
       }
@@ -166,6 +394,7 @@ class AuthService {
       isFallback: credential == null,
     );
 
+    await _persistSession(_currentAppUser!);
     return _currentAppUser!;
   }
 
@@ -279,11 +508,11 @@ class AuthService {
     }
 
     // STEP 3: After saving in Neon Tech, save the Neon UUID back into Firebase user profile
-    if (credential != null && credential.user != null && neonId != null) {
+    if (credential != null && credential.user != null) {
       try {
-        final displayNameWithNeon = "$cleanName|$neonId";
+        final displayNameWithNeon = "$cleanName|${neonId ?? ''}|anchor";
         await credential.user!.updateDisplayName(displayNameWithNeon);
-        debugPrint("✅ [3/3] Saved Neon UUID ($neonId) into Firebase user displayName: $displayNameWithNeon");
+        debugPrint("✅ [3/3] Saved Neon UUID ($neonId) and role (anchor) into Firebase user displayName: $displayNameWithNeon");
       } catch (e) {
         debugPrint("⚠️ Could not update Firebase display name: $e");
       }
@@ -298,6 +527,7 @@ class AuthService {
       isFallback: credential == null,
     );
 
+    await _persistSession(_currentAppUser!);
     return _currentAppUser!;
   }
 
@@ -330,27 +560,63 @@ class AuthService {
 
       final firebaseUser = credential.user!;
       String? neonId;
-      String role = 'organizer';
+      String? role;
       String fullName = cleanEmail.split('@').first;
 
-      // Extract existing Neon UUID from displayName if present
+      // Extract existing Neon UUID and role from displayName if present
       final rawDisplayName = firebaseUser.displayName ?? '';
       if (rawDisplayName.contains('|')) {
         final parts = rawDisplayName.split('|');
-        fullName = parts[0];
-        neonId = parts.length > 1 ? parts[1] : null;
+        if (parts.isNotEmpty && parts[0].trim().isNotEmpty) fullName = parts[0].trim();
+        if (parts.length > 1 && parts[1].trim().isNotEmpty) neonId = parts[1].trim();
+        if (parts.length > 2 && parts[2].trim().isNotEmpty) role = parts[2].trim().toLowerCase();
       } else if (rawDisplayName.isNotEmpty) {
         fullName = rawDisplayName;
       }
 
-      // 2. Query Neon Tech directly
+      // 2. Query Neon Tech directly (authoritative source)
       Map<String, dynamic>? neonUser;
       try {
         neonUser = await _neonDb.getUserByEmail(cleanEmail);
-      } catch (_) {}
+      } catch (e) {
+        debugPrint("⚠️ Direct Neon DB email query error: $e");
+      }
 
-      // If missing in Neon Tech, auto-sync this Firebase user into Neon Tech right now!
       if (neonUser == null) {
+        try {
+          neonUser = await _neonDb.getUserByUid(firebaseUser.uid);
+        } catch (e) {
+          debugPrint("⚠️ Direct Neon DB UID query error: $e");
+        }
+      }
+
+      // 3. Check backend API if direct Neon DB didn't find the user
+      if (neonUser == null) {
+        try {
+          final res = await _apiClient.post('/auth/login', {
+            'email': cleanEmail,
+            'password': password,
+          });
+          if (res.success && res.data != null) {
+            final data = res.data;
+            final user = data['user'] ?? {};
+            role = data['role'] ?? user['role'] ?? role;
+            neonId = data['neonId']?.toString() ?? user['id']?.toString() ?? neonId;
+            fullName = user['full_name'] ?? fullName;
+          }
+        } catch (e) {
+          debugPrint("⚠️ Backend API sync query error: $e");
+        }
+      }
+
+      if (neonUser != null) {
+        role = neonUser['role']?.toString().toLowerCase() ?? role;
+        neonId = neonUser['id']?.toString() ?? neonId;
+        fullName = neonUser['full_name']?.toString() ?? fullName;
+      }
+
+      // If user exists in neither Neon DB nor backend, auto-sync this Firebase user into Neon Tech
+      if (neonUser == null && (role == null || role.isEmpty)) {
         debugPrint("🔄 Auto-syncing Firebase user $cleanEmail into Neon Tech DB...");
         role = cleanEmail.contains('anchor') ? 'anchor' : 'organizer';
         neonId = await _neonDb.saveUser(
@@ -359,17 +625,16 @@ class AuthService {
           fullName: fullName,
           role: role,
         );
-      } else {
-        role = neonUser['role']?.toString().toLowerCase() ?? 'organizer';
-        neonId = neonUser['id']?.toString();
-        fullName = neonUser['full_name']?.toString() ?? fullName;
       }
 
-      // 3. Ensure Firebase user has Neon UUID saved in displayName
-      if (neonId != null && !rawDisplayName.contains('|')) {
+      role ??= cleanEmail.contains('anchor') ? 'anchor' : 'organizer';
+
+      // 4. Ensure Firebase user has role and Neon UUID stored in displayName
+      final targetDisplayName = "$fullName|${neonId ?? ''}|$role";
+      if (rawDisplayName != targetDisplayName) {
         try {
-          await firebaseUser.updateDisplayName("$fullName|$neonId");
-          debugPrint("✅ Synced Neon UUID ($neonId) into Firebase user displayName");
+          await firebaseUser.updateDisplayName(targetDisplayName);
+          debugPrint("✅ Synced role ($role) and Neon UUID ($neonId) into Firebase user displayName: $targetDisplayName");
         } catch (_) {}
       }
 
@@ -381,6 +646,8 @@ class AuthService {
         neonId: neonId,
       );
 
+      await _persistSession(_currentAppUser!);
+      debugPrint("✅ [Auth] Logged in ${_currentAppUser!.email} as ${_currentAppUser!.role} (Neon ID: $neonId)");
       return _currentAppUser!;
     } catch (e) {
       if (_isConfigError(e) || (e is FirebaseAuthException && (e.code == 'user-not-found' || e.code == 'invalid-credential'))) {
@@ -413,6 +680,7 @@ class AuthService {
           neonId: neonId,
           isFallback: true,
         );
+        await _persistSession(_currentAppUser!);
         debugPrint("✅ Resilient login succeeded via direct Neon Tech DB. Role: $role, Neon UUID: $neonId");
         return _currentAppUser!;
       }
@@ -439,6 +707,7 @@ class AuthService {
           neonId: neonId,
           isFallback: true,
         );
+        await _persistSession(_currentAppUser!);
         debugPrint("✅ Resilient login succeeded via backend API. Role: $role, Neon UUID: $neonId");
         return _currentAppUser!;
       } else {
@@ -469,6 +738,7 @@ class AuthService {
         neonId: 'demo-organizer-alex',
       );
     }
+    await _persistSession(_currentAppUser!);
     return _currentAppUser!;
   }
 
@@ -500,6 +770,7 @@ class AuthService {
     try {
       await _auth.signOut();
     } catch (_) {}
+    await _clearPersistedSession();
     _currentAppUser = null;
   }
 

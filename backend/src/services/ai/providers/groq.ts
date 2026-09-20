@@ -37,7 +37,7 @@ export async function callGroq(ctx: ScriptContext, timeoutMs = 4500): Promise<st
       throw new Error(`Groq API error ${response.status}: ${errText}`);
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as any;
     const content = data.choices?.[0]?.message?.content;
     if (!content) {
       throw new Error("Groq returned empty response");

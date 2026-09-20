@@ -47,16 +47,43 @@ aiRouter.post("/generate", async (req: Request, res: Response) => {
       tone,
     });
 
+    const scriptTitle =
+      type === "speaker_intro" && currentSpeakers[0]?.name
+        ? currentSpeakers[0].name
+        : type === "opening"
+        ? "Opening"
+        : type === "closing"
+        ? "Closing"
+        : type === "transition"
+        ? "Transition"
+        : "Announcement";
+
     const scriptRecord: Script = {
       id: `script-${Date.now()}`,
       type,
+      title: scriptTitle,
+      speakerName: currentSpeakers[0]?.name || null,
+      timeSlot: currentItem
+        ? `${currentItem.startTime.slice(11, 16)} - ${currentItem.endTime.slice(11, 16)}`
+        : "10:30 AM - 10:35 AM",
+      durationMinutes: currentItem?.duration || 5,
+      status: "approved",
       itemId: currentItem?.id || null,
       text: result.script,
+      tone: tone || event.tone || "Motivational",
+      targetAudience: "All Attendees",
+      organizerApprovedName: "Alex Rivera",
       source: result.source,
       provider: result.provider,
       version: 1,
       createdBy: "ai",
       createdAt: Date.now(),
+      lastUpdated: Date.now(),
+      isNew: true,
+      isUpdated: false,
+      isReviewedByAnchor: false,
+      viewedByAnchor: false,
+      usageCount: 0,
     };
 
     memoryStore.addScript(eventId, scriptRecord);
@@ -64,6 +91,7 @@ aiRouter.post("/generate", async (req: Request, res: Response) => {
     return sendSuccess(res, {
       ...result,
       id: scriptRecord.id,
+      scriptRecord,
     });
   } catch (err) {
     console.error("AI Generation Route Error:", err);

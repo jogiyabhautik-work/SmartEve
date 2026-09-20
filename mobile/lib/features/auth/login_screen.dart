@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
 import '../dashboard/stagepilot_dashboard_screen.dart';
-import '../anchor/anchor_teleprompter_screen.dart';
+import '../anchor/anchor_dashboard_screen.dart';
 import 'role_selection_screen.dart';
 import 'widgets/auth_text_field.dart';
 import 'widgets/auth_button.dart';
@@ -80,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (role.toLowerCase() == 'anchor') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('👋 Welcome back, Anchor! Opening your teleprompter...'),
+          content: Text('👋 Welcome back! Opening your Anchor Dashboard...'),
           backgroundColor: AppTheme.liveGreen,
           duration: Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
@@ -88,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (context) => const AnchorTeleprompterScreen(),
+          builder: (context) => const AnchorDashboardScreen(),
         ),
         (route) => false,
       );
@@ -124,13 +124,13 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       builder: (ctx) {
         return StatefulBuilder(
-          builder: (context, setModalState) {
+          builder: (sheetCtx, setModalState) {
             return Padding(
               padding: EdgeInsets.only(
                 left: 24,
                 right: 24,
                 top: 24,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                bottom: MediaQuery.of(sheetCtx).viewInsets.bottom + 24,
               ),
               child: Form(
                 key: resetFormKey,
@@ -191,34 +191,38 @@ class _LoginScreenState extends State<LoginScreen> {
                           try {
                             await AuthService().sendPasswordResetEmail(resetEmailController.text);
                             if (!mounted) return;
-                            Navigator.pop(ctx);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Row(
-                                  children: [
-                                    const Icon(Icons.mark_email_read_rounded, color: Colors.white),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        'Reset link sent to ${resetEmailController.text}. Please check your inbox.',
+                            if (ctx.mounted) Navigator.pop(ctx);
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Row(
+                                    children: [
+                                      const Icon(Icons.mark_email_read_rounded, color: Colors.white),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          'Reset link sent to ${resetEmailController.text}. Please check your inbox.',
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
+                                  backgroundColor: AppTheme.liveGreen,
+                                  duration: const Duration(seconds: 4),
+                                  behavior: SnackBarBehavior.floating,
                                 ),
-                                backgroundColor: AppTheme.liveGreen,
-                                duration: const Duration(seconds: 4),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
+                              );
+                            }
                           } catch (err) {
                             setModalState(() => isSending = false);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(err.toString().replaceAll('Exception: ', '')),
-                                backgroundColor: AppTheme.dangerRose,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(err.toString().replaceAll('Exception: ', '')),
+                                  backgroundColor: AppTheme.dangerRose,
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
                           }
                         }
                       },

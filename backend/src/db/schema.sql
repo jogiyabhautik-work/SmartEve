@@ -210,6 +210,19 @@ CREATE TABLE IF NOT EXISTS event_logs (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ==================== 13. ANCHOR CHECKLIST ITEMS ====================
+CREATE TABLE IF NOT EXISTS anchor_checklist_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    anchor_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    item_key VARCHAR(100) NOT NULL,
+    label VARCHAR(255) NOT NULL,
+    is_completed BOOLEAN DEFAULT FALSE,
+    completed_at TIMESTAMP NULL,
+    order_index INT NOT NULL,
+    UNIQUE(event_id, anchor_id, item_key)
+);
+
 -- ==================== INDEXES ====================
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_firebase_uid ON users(firebase_uid);
@@ -226,3 +239,5 @@ CREATE INDEX IF NOT EXISTS idx_ai_scripts_script_type ON ai_scripts(script_type)
 CREATE INDEX IF NOT EXISTS idx_announcements_event_id ON announcements(event_id);
 CREATE INDEX IF NOT EXISTS idx_event_timeline_event_id ON event_timeline_updates(event_id);
 CREATE INDEX IF NOT EXISTS idx_event_logs_event_id ON event_logs(event_id);
+CREATE INDEX IF NOT EXISTS idx_anchor_checklist_event_id ON anchor_checklist_items(event_id);
+CREATE INDEX IF NOT EXISTS idx_anchor_checklist_anchor_id ON anchor_checklist_items(anchor_id);

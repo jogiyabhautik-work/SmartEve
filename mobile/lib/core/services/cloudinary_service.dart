@@ -35,4 +35,33 @@ class CloudinaryService {
     }
     return null;
   }
+
+  /// Prompts user to pick an avatar image from gallery or camera and uploads to Cloudinary
+  Future<String?> pickAndUploadProfileAvatar({ImageSource source = ImageSource.gallery}) async {
+    try {
+      final XFile? file = await _picker.pickImage(
+        source: source,
+        maxWidth: 600,
+        maxHeight: 600,
+        imageQuality: 85,
+      );
+
+      if (file == null) return null;
+
+      final Uint8List bytes = await file.readAsBytes();
+      final String base64Image = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+
+      final res = await _apiClient.post('/upload/image', {
+        'image': base64Image,
+        'folder': 'smarteve/profiles',
+      });
+
+      if (res.success && res.data != null) {
+        return res.data['url'] as String?;
+      }
+    } catch (e) {
+      // Fallback
+    }
+    return null;
+  }
 }

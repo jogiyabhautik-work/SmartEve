@@ -6,8 +6,9 @@ import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/event_provider.dart';
 import '../dashboard/stagepilot_dashboard_screen.dart';
-import '../auth/login_screen.dart';
 import '../auth/role_selection_screen.dart';
+import '../scripts/scripts_library_screen.dart';
+import '../live_dashboard/live_dashboard_screen.dart';
 
 class AnchorTeleprompterScreen extends StatefulWidget {
   const AnchorTeleprompterScreen({super.key});
@@ -72,12 +73,7 @@ class _AnchorTeleprompterScreenState extends State<AnchorTeleprompterScreen> {
   }
 
   void _handleSignOut() async {
-    await AuthService().signOut();
-    if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-      (route) => false,
-    );
+    await AuthService().confirmSignOut(context);
   }
 
   @override
@@ -102,6 +98,24 @@ class _AnchorTeleprompterScreenState extends State<AnchorTeleprompterScreen> {
               );
             },
           ),
+          IconButton(
+            tooltip: 'Live Stage Dashboard',
+            icon: const Icon(Icons.co_present_rounded, color: Color(0xFFEF4444)),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const LiveDashboardScreen()),
+              );
+            },
+          ),
+          IconButton(
+            tooltip: 'Scripts Library',
+            icon: const Icon(Icons.description_rounded, color: AppTheme.primaryBlue),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ScriptsLibraryScreen()),
+              );
+            },
+          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert_rounded, color: AppTheme.textPrimary),
             color: AppTheme.surface,
@@ -110,7 +124,15 @@ class _AnchorTeleprompterScreenState extends State<AnchorTeleprompterScreen> {
               side: const BorderSide(color: AppTheme.border),
             ),
             onSelected: (value) {
-              if (value == 'organizer') {
+              if (value == 'live_stage') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const LiveDashboardScreen()),
+                );
+              } else if (value == 'scripts') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ScriptsLibraryScreen()),
+                );
+              } else if (value == 'organizer') {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const StagePilotDashboardScreen()),
                 );
@@ -123,6 +145,26 @@ class _AnchorTeleprompterScreenState extends State<AnchorTeleprompterScreen> {
               }
             },
             itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'live_stage',
+                child: Row(
+                  children: [
+                    Icon(Icons.co_present_rounded, size: 18, color: Color(0xFFEF4444)),
+                    SizedBox(width: 10),
+                    Text('Live Stage Dashboard', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFEF4444))),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'scripts',
+                child: Row(
+                  children: [
+                    Icon(Icons.description_rounded, size: 18, color: AppTheme.primaryBlue),
+                    SizedBox(width: 10),
+                    Text('Scripts Library', style: TextStyle(color: AppTheme.textPrimary, fontSize: 13)),
+                  ],
+                ),
+              ),
               const PopupMenuItem(
                 value: 'organizer',
                 child: Row(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
-import '../../anchor/anchor_teleprompter_screen.dart';
+import '../../anchor/anchor_dashboard_screen.dart';
 import '../widgets/auth_text_field.dart';
 import '../widgets/auth_button.dart';
 import '../widgets/step_indicator.dart';
@@ -59,16 +59,16 @@ class _AnchorRegistrationScreenState extends State<AnchorRegistrationScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('🎉 Registration successful! Welcome to Anchor Teleprompter.'),
+          content: Text('🎉 Registration successful! Welcome to Anchor Dashboard.'),
           backgroundColor: AppTheme.liveGreen,
           duration: Duration(seconds: 3),
         ),
       );
 
-      // Redirect immediately to respective screen: Anchor Teleprompter
+      // Redirect immediately to respective screen: Anchor Dashboard
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (context) => const AnchorTeleprompterScreen(),
+          builder: (context) => const AnchorDashboardScreen(),
         ),
         (route) => false,
       );
