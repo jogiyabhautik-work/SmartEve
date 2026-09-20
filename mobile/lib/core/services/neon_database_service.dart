@@ -1177,6 +1177,7 @@ class NeonDatabaseService {
 
   /// Fetch user notification preferences directly from Neon PostgreSQL
   Future<Map<String, dynamic>?> getNotificationPreferences(String userId) async {
+    if (!_isUuid(userId)) return null;
     Connection? connection;
     try {
       connection = await _getConnection();
@@ -1198,6 +1199,7 @@ class NeonDatabaseService {
 
   /// Save or update user notification preferences directly in Neon PostgreSQL
   Future<bool> saveNotificationPreferences(String userId, Map<String, dynamic> prefs) async {
+    if (!_isUuid(userId)) return false;
     Connection? connection;
     try {
       connection = await _getConnection();
