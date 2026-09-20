@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/services/auth_service.dart';
-import '../auth/login_screen.dart';
+import '../../core/widgets/smart_eve_bottom_nav.dart';
 import '../anchor/anchor_teleprompter_screen.dart';
 import '../auth/role_selection_screen.dart';
+import '../scripts/scripts_library_screen.dart';
+import '../profile/profile_settings_screen.dart';
 
 class AppSlateColors {
   static const Color slate300 = Color(0xFFCBD5E1);
@@ -25,12 +27,7 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
   int _settingsTabIndex = 0;
 
   void _handleSignOut() async {
-    await AuthService().signOut();
-    if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-      (route) => false,
-    );
+    await AuthService().confirmSignOut(context);
   }
 
   // Mock Delay State for Interactive Preview
@@ -56,13 +53,14 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
+      extendBody: isMobile,
       body: SafeArea(
+        bottom: !isMobile,
         child: isMobile
             ? Column(
                 children: [
                   _buildMobileHeader(),
                   Expanded(child: _buildCurrentView()),
-                  _buildMobileBottomNav(),
                 ],
               )
             : Row(
@@ -72,6 +70,13 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
                 ],
               ),
       ),
+      bottomNavigationBar: isMobile
+          ? SmartEveBottomNav(
+              selectedIndex: _selectedIndex > 4 ? 0 : _selectedIndex,
+              onItemSelected: (idx) => setState(() => _selectedIndex = idx),
+              items: SmartEveBottomNav.defaultOrganizerItems,
+            )
+          : null,
     );
   }
 
@@ -127,8 +132,8 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
           _buildNavItem(1, Icons.calendar_month_rounded, 'Agenda'),
           _buildNavItem(2, Icons.people_alt_rounded, 'Speakers'),
           _buildNavItem(3, Icons.auto_awesome_rounded, 'AI Assistant'),
-          _buildNavItem(4, Icons.schedule_rounded, 'Schedule Update'),
-          _buildNavItem(5, Icons.settings_rounded, 'Settings'),
+          _buildNavItem(4, Icons.settings_rounded, 'Settings'),
+          _buildNavItem(5, Icons.schedule_rounded, 'Schedule Update'),
 
           const Spacer(),
 
@@ -257,7 +262,15 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
             color: Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             onSelected: (value) {
-              if (value == 'anchor') {
+              if (value == 'profile') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ProfileSettingsScreen()),
+                );
+              } else if (value == 'scripts') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ScriptsLibraryScreen()),
+                );
+              } else if (value == 'anchor') {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const AnchorTeleprompterScreen()),
                 );
@@ -278,6 +291,26 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
                 ),
               ),
               const PopupMenuDivider(),
+              const PopupMenuItem(
+                value: 'profile',
+                child: Row(
+                  children: [
+                    Icon(Icons.person_rounded, size: 18, color: Color(0xFF7C3AED)),
+                    SizedBox(width: 8),
+                    Text('Profile & Settings', style: TextStyle(fontSize: 13)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'scripts',
+                child: Row(
+                  children: [
+                    Icon(Icons.description_rounded, size: 18, color: Color(0xFF2563EB)),
+                    SizedBox(width: 8),
+                    Text('Scripts Library & Hub', style: TextStyle(fontSize: 13)),
+                  ],
+                ),
+              ),
               const PopupMenuItem(
                 value: 'anchor',
                 child: Row(
@@ -326,24 +359,6 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
     );
   }
 
-  Widget _buildMobileBottomNav() {
-    return BottomNavigationBar(
-      currentIndex: _selectedIndex > 3 ? 0 : _selectedIndex,
-      onTap: (idx) => setState(() => _selectedIndex = idx),
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: const Color(0xFF2563EB),
-      unselectedItemColor: AppSlateColors.slate400,
-      selectedLabelStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
-      unselectedLabelStyle: GoogleFonts.inter(fontSize: 12),
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.calendar_month_rounded), label: 'Agenda'),
-        BottomNavigationBarItem(icon: Icon(Icons.people_alt_rounded), label: 'Speakers'),
-        BottomNavigationBarItem(icon: Icon(Icons.auto_awesome_rounded), label: 'AI Assistant'),
-      ],
-    );
-  }
-
   // ==========================================
   // CURRENT VIEW ROUTER
   // ==========================================
@@ -358,9 +373,9 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
       case 3:
         return _buildAIAssistantView();
       case 4:
-        return _buildScheduleUpdateView();
-      case 5:
         return _buildEventSettingsView();
+      case 5:
+        return _buildScheduleUpdateView();
       default:
         return _buildEventDashboardView();
     }
@@ -370,8 +385,11 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
   // 1 & 5: EVENT DASHBOARD VIEW
   // ==========================================
   Widget _buildEventDashboardView() {
+    final user = AuthService().currentAppUser;
+    final userName = (user != null && user.fullName.isNotEmpty) ? user.fullName : 'Organizer';
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 96),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -384,7 +402,7 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Good Morning, Anchor! 👋',
+                      'Good Morning! 👋',
                       style: GoogleFonts.inter(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -395,8 +413,9 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
                     const SizedBox(height: 4),
                     Text(
                       "Here's what's happening at the event today.",
-                      style: GoogleFonts.inter(fontSize: 13, color: AppSlateColors.slate500),
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(fontSize: 13, color: AppSlateColors.slate500),
                     ),
                   ],
                 ),
@@ -405,16 +424,19 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const CircleAvatar(
-                    radius: 16,
-                    backgroundColor: Color(0xFFE2E8F0),
-                    child: Icon(Icons.person, size: 18, color: Color(0xFF475569)),
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundColor: const Color(0xFF2563EB),
+                    child: Text(
+                      userName.isNotEmpty ? userName[0].toUpperCase() : 'O',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
                   ),
                   const SizedBox(width: 6),
                   ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 90),
                     child: Text(
-                      'Romal Tandel\nAnchor',
+                      '$userName\nOrganizer',
                       style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -581,59 +603,76 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
               border: Border.all(color: const Color(0xFFFDE68A)),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFEF3C7),
-                    borderRadius: BorderRadius.circular(12),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isNarrow = constraints.maxWidth < 450;
+                final content = Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706)),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Schedule Status Alert',
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF92400E),
+                            ),
+                          ),
+                          Text(
+                            _isDelayApplied
+                                ? 'Running $_delayMinutes minutes late. Dynamic reflow applied.'
+                                : 'Running 10 minutes late. Action recommended.',
+                            style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFFB45309)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+
+                final updateBtn = ElevatedButton(
+                  onPressed: () => setState(() => _selectedIndex = 5),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFD97706),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
-                  child: const Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706), size: 20),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
+                  child: const Text('Update Schedule'),
+                );
+
+                if (isNarrow) {
+                  return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Schedule Status Alert',
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF92400E),
-                          fontSize: 13,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        _isDelayApplied
-                            ? 'Running $_delayMinutes minutes late.'
-                            : 'Running 10 min late.',
-                        style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFFB45309)),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                      content,
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: updateBtn,
                       ),
                     ],
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Flexible(
-                  fit: FlexFit.loose,
-                  child: ElevatedButton(
-                    onPressed: () => setState(() => _selectedIndex = 4),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFD97706),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    child: const Text('Update Schedule', style: TextStyle(fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  ),
-                ),
-              ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(child: content),
+                    const SizedBox(width: 12),
+                    updateBtn,
+                  ],
+                );
+              },
             ),
           ),
         ],
@@ -722,26 +761,31 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
     ];
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 96),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Event Agenda',
-                    style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    'Manage your event schedule and sessions.',
-                    style: GoogleFonts.inter(color: AppSlateColors.slate500),
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Event Agenda',
+                      style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      'Manage your event schedule and sessions.',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(color: AppSlateColors.slate500),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 12),
               ElevatedButton.icon(
                 onPressed: () {},
                 icon: const Icon(Icons.add_rounded, size: 18),
@@ -749,7 +793,7 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2563EB),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
@@ -810,12 +854,19 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 8),
                       IconButton(
+                        visualDensity: VisualDensity.compact,
+                        constraints: const BoxConstraints(),
+                        padding: const EdgeInsets.all(4),
                         icon: const Icon(Icons.edit_outlined, size: 18, color: AppSlateColors.slate400),
                         onPressed: () {},
                       ),
+                      const SizedBox(width: 4),
                       IconButton(
+                        visualDensity: VisualDensity.compact,
+                        constraints: const BoxConstraints(),
+                        padding: const EdgeInsets.all(4),
                         icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppSlateColors.rose400),
                         onPressed: () {},
                       ),
@@ -856,26 +907,31 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
     ];
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 96),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Speakers',
-                    style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    'Manage event speakers and generate introductions.',
-                    style: GoogleFonts.inter(color: AppSlateColors.slate500),
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Speakers',
+                      style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      'Manage event speakers and generate introductions.',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(color: AppSlateColors.slate500),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 12),
               ElevatedButton.icon(
                 onPressed: () {},
                 icon: const Icon(Icons.add_rounded, size: 18),
@@ -883,6 +939,7 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2563EB),
                   foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
@@ -1039,7 +1096,7 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
   // ==========================================
   Widget _buildAIAssistantView() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 96),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1047,18 +1104,22 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
             children: [
               const Icon(Icons.auto_awesome_rounded, color: Color(0xFF4F46E5), size: 28),
               const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'AI Assistant',
-                    style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    'Generate announcements, transitions and more.',
-                    style: GoogleFonts.inter(color: AppSlateColors.slate500),
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AI Assistant',
+                      style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      'Generate announcements, transitions and more.',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(color: AppSlateColors.slate500),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -1220,7 +1281,7 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
   // ==========================================
   Widget _buildScheduleUpdateView() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 96),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1377,7 +1438,7 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
         children: [
           Text(time, style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: const Color(0xFF334155))),
           const SizedBox(width: 20),
-          Expanded(child: Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.w500))),
+          Expanded(child: Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
           if (extended)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -1402,7 +1463,7 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
   // ==========================================
   Widget _buildEventSettingsView() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 96),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1410,30 +1471,37 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
             children: [
               const Icon(Icons.settings_rounded, color: Color(0xFF2563EB), size: 28),
               const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Event Settings',
-                    style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    'Configure your event details and AI preferences.',
-                    style: GoogleFonts.inter(color: AppSlateColors.slate500),
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Event Settings',
+                      style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      'Configure your event details and AI preferences.',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(color: AppSlateColors.slate500),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
           const SizedBox(height: 20),
 
           // Settings Sub-Tabs
-          Row(
-            children: [
-              _buildSettingsTab(0, 'General'),
-              _buildSettingsTab(1, 'AI Preferences'),
-              _buildSettingsTab(2, 'Notifications'),
-            ],
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildSettingsTab(0, 'General'),
+                _buildSettingsTab(1, 'AI Preferences'),
+                _buildSettingsTab(2, 'Notifications'),
+              ],
+            ),
           ),
           const SizedBox(height: 24),
 
@@ -1549,7 +1617,9 @@ class _StagePilotDashboardScreenState extends State<StagePilotDashboardScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title, style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF334155))),
+          Expanded(
+            child: Text(title, style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF334155))),
+          ),
           Switch(
             value: initialValue,
             onChanged: (val) {},

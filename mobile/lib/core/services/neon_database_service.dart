@@ -1281,5 +1281,85 @@ class NeonDatabaseService {
     }
     return notifs;
   }
+
+  /// Fetch Anchor Dashboard Data directly from Neon PostgreSQL
+  Future<Map<String, dynamic>?> getAnchorDashboardData([String? userId]) async {
+    Connection? connection;
+    try {
+      connection = await _getConnection();
+      final result = await connection.execute(
+        Sql.indexed("""
+          SELECT e.id, e.title, e.description, e.event_type, e.status, e.start_date, e.end_date, e.location,
+                 u.full_name as organizer_name, u.phone as organizer_phone, u.email as organizer_email, u.avatar_url as organizer_avatar
+          FROM events e
+          LEFT JOIN users u ON e.created_by = u.id
+          WHERE e.deleted_at IS NULL
+          ORDER BY e.start_date ASC
+          LIMIT 10
+        """),
+      );
+
+      final List<Map<String, dynamic>> upcoming = [];
+      final List<Map<String, dynamic>> invitations = [];
+      final List<Map<String, dynamic>> completed = [];
+
+      for (final row in result) {
+        final item = {
+          'id': row[0]?.toString() ?? '',
+          'title': row[1]?.toString() ?? 'Stage Event',
+          'description': row[2]?.toString() ?? '',
+          'eventType': row[3]?.toString() ?? 'conference',
+          'status': row[4]?.toString() ?? 'scheduled',
+          'startDate': row[5]?.toString() ?? DateTime.now().toIso8601String(),
+          'endDate': row[6]?.toString() ?? DateTime.now().add(const Duration(hours: 4)).toIso8601String(),
+          'location': row[7]?.toString() ?? 'Main Stage',
+          'organizerName': row[8]?.toString() ?? 'Romal Tandel',
+          'organizerPhone': row[9]?.toString() ?? '+91 98765 43210',
+          'organizerEmail': row[10]?.toString() ?? 'romaltandel1264@gmail.com',
+          'organizerAvatar': row[11]?.toString(),
+        };
+
+        if (item['status'] == 'completed') {
+          completed.add(item);
+        } else {
+          upcoming.add(item);
+        }
+      }
+
+      return {
+        'upcomingEvents': upcoming,
+        'invitations': invitations,
+        'completedEvents': completed,
+      };
+    } catch (e) {
+      debugPrint("⚠️ [Neon DB Direct] Error fetching anchor dashboard data: $e");
+      return null;
+    } finally {
+      await connection?.close();
+    }
+  }
+
+  /// Update invitation status (accepted/declined) in Neon PostgreSQL
+  Future<bool> updateInvitationStatus(String assignmentOrEventId, String status) async {
+    Connection? connection;
+    try {
+      connection = await _getConnection();
+      await connection.execute(
+        Sql.indexed("""
+          UPDATE event_anchors 
+          SET invitation_status = \$1, updated_at = CURRENT_TIMESTAMP
+          WHERE (id::text = \$2 OR id = \$2::uuid OR event_id::text = \$2 OR event_id = \$2::uuid)
+        """),
+        parameters: [status, assignmentOrEventId],
+      );
+      return true;
+    } catch (e) {
+      debugPrint("⚠️ [Neon DB Direct] Error updating invitation status: $e");
+      return false;
+    } finally {
+      await connection?.close();
+    }
+  }
 }
+
 

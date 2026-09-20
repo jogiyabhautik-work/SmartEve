@@ -40,7 +40,7 @@ export async function callNvidiaNim(ctx: ScriptContext, timeoutMs = 4500): Promi
       throw new Error(`Nvidia NIM API error ${response.status}: ${errText}`);
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as any;
     const content = data.choices?.[0]?.message?.content;
     if (!content) {
       throw new Error("Nvidia NIM returned empty response");

@@ -1,7 +1,7 @@
 import { AgendaItem } from "../types/agenda.js";
 import { EventData } from "../types/event.js";
 import { EventNotification } from "../types/notification.js";
-import { Script } from "../types/script.js";
+import { Script, ScriptModificationRequest } from "../types/script.js";
 import { Speaker } from "../types/speaker.js";
 import { User } from "../types/user.js";
 
@@ -204,6 +204,174 @@ export const INITIAL_DEMO_AGENDA: Record<string, AgendaItem> = {
   },
 };
 
+export const INITIAL_DEMO_SCRIPTS: Script[] = [
+  {
+    id: "script-1",
+    type: "opening",
+    title: "Opening",
+    speakerName: null,
+    timeSlot: "09:30 AM - 09:45 AM",
+    durationMinutes: 15,
+    status: "approved",
+    itemId: "item-1",
+    text:
+      "Good morning, innovators, creators, and leaders! Welcome to TechNova 2026 — the international summit on deterministic intelligence and autonomous systems. Today, we bring together over 1,200 forward-thinking technologists from 24 countries under one roof. Prepare for groundbreaking discoveries, deep-dive architectural breakthroughs, and high-energy stage demonstrations. Let us declare TechNova 2026 officially open!",
+    tone: "Motivational",
+    targetAudience: "Tech Leaders & Engineers",
+    organizerApprovedName: "Alex Rivera",
+    organizerApprovedAvatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120",
+    source: "ai",
+    provider: "gemini",
+    version: 1,
+    createdBy: "organizer",
+    createdAt: Date.now() - 3600000 * 2,
+    lastUpdated: Date.now() - 3600000 * 2,
+    isNew: false,
+    isUpdated: false,
+    isReviewedByAnchor: true,
+    viewedByAnchor: true,
+    viewedAt: Date.now() - 3600000,
+    usageCount: 3,
+  },
+  {
+    id: "script-2",
+    type: "speaker_intro",
+    title: "Dr. Aris Vance",
+    speakerName: "Dr. Aris Vance",
+    timeSlot: "09:45 AM - 10:25 AM",
+    durationMinutes: 40,
+    status: "approved",
+    itemId: "item-2",
+    text:
+      "Our first keynote speaker today is a true pioneer in deterministic reasoning and mission-critical AI co-pilots. As Vice President of Applied AI at DeepScale Labs and former Head of Research at AI Frontier, he has spearheaded frameworks powering millions of sub-second decisions. Please give a thunderous TechNova welcome to Dr. Aris Vance!",
+    tone: "Formal",
+    targetAudience: "Enterprise Architects",
+    organizerApprovedName: "Alex Rivera",
+    organizerApprovedAvatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120",
+    source: "ai",
+    provider: "gemini",
+    version: 1,
+    createdBy: "organizer",
+    createdAt: Date.now() - 3600000,
+    lastUpdated: Date.now() - 3600000,
+    isNew: false,
+    isUpdated: false,
+    isReviewedByAnchor: true,
+    viewedByAnchor: true,
+    viewedAt: Date.now() - 1800000,
+    usageCount: 5,
+  },
+  {
+    id: "script-3",
+    type: "transition",
+    title: "Transition",
+    speakerName: null,
+    timeSlot: "10:25 AM - 10:40 AM",
+    durationMinutes: 15,
+    status: "approved",
+    itemId: "item-3",
+    text:
+      "Thank you Dr. Vance for that visionary keynote on autonomous agent resilience. Up next, we are taking a brief 15-minute interactive networking pause. Refreshments and specialty coffee are served in the Grand Atrium. Be sure to explore the live demo booths and rejoin us here at 10:40 AM sharp for Priya Sharma's hyperscale infrastructure deep-dive!",
+    tone: "Casual",
+    targetAudience: "All Attendees",
+    organizerApprovedName: "Alex Rivera",
+    organizerApprovedAvatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120",
+    source: "ai",
+    provider: "groq",
+    version: 1,
+    createdBy: "organizer",
+    createdAt: Date.now() - 1800000,
+    lastUpdated: Date.now() - 1800000,
+    isNew: false,
+    isUpdated: false,
+    isReviewedByAnchor: false,
+    viewedByAnchor: true,
+    viewedAt: Date.now() - 900000,
+    usageCount: 2,
+  },
+  {
+    id: "script-4",
+    type: "speaker_intro",
+    title: "Priya Sharma",
+    speakerName: "Priya Sharma",
+    timeSlot: "10:40 AM - 11:15 AM",
+    durationMinutes: 35,
+    status: "revised",
+    itemId: "item-4",
+    text:
+      "Welcome back everyone. Our next keynote speaker is renowned for engineering high-concurrency systems that withstand staggering scale. As Head of Distributed Systems at QuantumCloud and an ACM Distinguished Engineer, she oversees global edge clusters processing 10 million concurrent operations. Put your hands together for Priya Sharma!",
+    tone: "Visionary",
+    targetAudience: "Cloud & Distributed Engineers",
+    organizerApprovedName: "Alex Rivera",
+    organizerApprovedAvatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120",
+    source: "ai",
+    provider: "gemini",
+    version: 2,
+    createdBy: "organizer",
+    createdAt: Date.now() - 1200000,
+    lastUpdated: Date.now() - 300000,
+    isNew: false,
+    isUpdated: true,
+    isReviewedByAnchor: false,
+    viewedByAnchor: false,
+    usageCount: 1,
+  },
+  {
+    id: "script-5",
+    type: "announcement",
+    title: "Main Stage Audio Optimization & Stage Schedule Notice",
+    speakerName: null,
+    timeSlot: "11:15 AM - 11:20 AM",
+    durationMinutes: 5,
+    status: "pending",
+    itemId: null,
+    text:
+      "Attention attendees and stage crew: Due to an interactive live demo in Hall B, we have synchronized our downstream agenda with an additional 5-minute safety buffer. Please take advantage of the QR codes at your seats for live interactive Q&A submission during the upcoming panel discussion.",
+    tone: "Formal",
+    targetAudience: "All Attendees & Crew",
+    organizerApprovedName: "Sarah Jenkins",
+    organizerApprovedAvatarUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120",
+    source: "manual",
+    provider: "manual",
+    version: 1,
+    createdBy: "organizer",
+    createdAt: Date.now() - 600000,
+    lastUpdated: Date.now() - 600000,
+    isNew: true,
+    isUpdated: false,
+    isReviewedByAnchor: false,
+    viewedByAnchor: false,
+    usageCount: 0,
+  },
+  {
+    id: "script-6",
+    type: "closing",
+    title: "Closing",
+    speakerName: null,
+    timeSlot: "12:50 PM - 01:05 PM",
+    durationMinutes: 15,
+    status: "approved",
+    itemId: "item-7",
+    text:
+      "What an unforgettable journey of ideas, collaboration, and inspiration today at TechNova 2026. On behalf of the organizing committee, our stellar keynote speakers, and our partners, we thank each and every one of you for being part of this remarkable stage. Let us take these insights into the future. Safe travels, and see you next year!",
+    tone: "Motivational",
+    targetAudience: "All Attendees",
+    organizerApprovedName: "Alex Rivera",
+    organizerApprovedAvatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120",
+    source: "ai",
+    provider: "gemini",
+    version: 1,
+    createdBy: "organizer",
+    createdAt: Date.now() - 3600000 * 3,
+    lastUpdated: Date.now() - 3600000 * 3,
+    isNew: false,
+    isUpdated: false,
+    isReviewedByAnchor: false,
+    viewedByAnchor: false,
+    usageCount: 0,
+  },
+];
+
 export class MemoryStore {
   private state: EventStoreState = {
     users: { ...INITIAL_DEMO_USERS },
@@ -211,7 +379,7 @@ export class MemoryStore {
     speakers: { "technova-2026": { ...INITIAL_DEMO_SPEAKERS } },
     agenda: { "technova-2026": { ...INITIAL_DEMO_AGENDA } },
     notifications: { "technova-2026": [] },
-    scripts: { "technova-2026": [] },
+    scripts: { "technova-2026": [...INITIAL_DEMO_SCRIPTS] },
   };
 
   private listeners: Set<() => void> = new Set();
@@ -313,10 +481,76 @@ export class MemoryStore {
     return this.state.scripts[eventId] || [];
   }
 
+  getScript(eventId: string, scriptId: string): Script | null {
+    const list = this.state.scripts[eventId] || [];
+    return list.find((s) => s.id === scriptId) || null;
+  }
+
   addScript(eventId: string, script: Script): void {
     if (!this.state.scripts[eventId]) this.state.scripts[eventId] = [];
     this.state.scripts[eventId].unshift(script);
     this.notify();
+  }
+
+  updateScript(eventId: string, scriptId: string, updates: Partial<Script>): Script | null {
+    if (!this.state.scripts[eventId]) return null;
+    const idx = this.state.scripts[eventId].findIndex((s) => s.id === scriptId);
+    if (idx === -1) return null;
+    const existing = this.state.scripts[eventId][idx];
+    const updated: Script = {
+      ...existing,
+      ...updates,
+      lastUpdated: Date.now(),
+    };
+    this.state.scripts[eventId][idx] = updated;
+    this.notify();
+    return updated;
+  }
+
+  addModificationRequest(
+    eventId: string,
+    scriptId: string,
+    request: ScriptModificationRequest
+  ): Script | null {
+    if (!this.state.scripts[eventId]) return null;
+    const idx = this.state.scripts[eventId].findIndex((s) => s.id === scriptId);
+    if (idx === -1) return null;
+    const existing = this.state.scripts[eventId][idx];
+    const currentRequests = existing.modificationRequests || [];
+    const updated: Script = {
+      ...existing,
+      status: "revised",
+      isUpdated: true,
+      lastUpdated: Date.now(),
+      modificationRequests: [request, ...currentRequests],
+    };
+    this.state.scripts[eventId][idx] = updated;
+    this.notify();
+    return updated;
+  }
+
+  getScriptAnalytics(eventId: string) {
+    const scripts = this.state.scripts[eventId] || [];
+    const totalScripts = scripts.length;
+    const reviewedCount = scripts.filter((s) => s.isReviewedByAnchor).length;
+    const reviewRate = totalScripts > 0 ? Math.round((reviewedCount / totalScripts) * 100) : 0;
+    const totalWords = scripts.reduce((acc, s) => acc + (s.text ? s.text.split(/\s+/).filter(Boolean).length : 0), 0);
+    const mostUsed = [...scripts].sort((a, b) => (b.usageCount || 0) - (a.usageCount || 0)).slice(0, 3);
+    const byType = {
+      opening: scripts.filter((s) => s.type === "opening").length,
+      speaker_intro: scripts.filter((s) => s.type === "speaker_intro").length,
+      transition: scripts.filter((s) => s.type === "transition").length,
+      closing: scripts.filter((s) => s.type === "closing").length,
+      announcement: scripts.filter((s) => s.type === "announcement").length,
+    };
+    return {
+      totalScripts,
+      reviewedCount,
+      reviewRate,
+      totalWords,
+      byType,
+      mostUsed,
+    };
   }
 
   subscribe(listener: () => void): () => void {

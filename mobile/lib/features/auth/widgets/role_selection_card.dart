@@ -26,7 +26,7 @@ class RoleSelectionCard extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: isSelected ? AppTheme.primaryBlue.withValues(alpha: 0.08) : AppTheme.surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
           border: Border.all(
             color: isSelected ? AppTheme.primaryBlue : AppTheme.border,
             width: isSelected ? 2 : 1,

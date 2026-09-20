@@ -8,6 +8,10 @@ import { aiRouter } from "./routes/ai.js";
 import { publicRouter } from "./routes/public.js";
 import { uploadRouter } from "./routes/upload.js";
 import { authRouter } from "./routes/auth.js";
+import { anchorRouter } from "./routes/anchor.js";
+import { checklistRouter } from "./routes/checklist.js";
+import { notificationsRouter } from "./routes/notifications.js";
+import { userRouter } from "./routes/user.js";
 import { APP_NAME, APP_TAGLINE } from "./config/constants.js";
 import "./config/db.js";
 import "./config/cloudinary.js";
@@ -51,12 +55,16 @@ app.get("/api/health", (req, res) => {
 
 // Mount modular API routes
 app.use("/api/auth", authRouter);
+app.use("/api/anchor", anchorRouter);
+app.use("/api/anchor", notificationsRouter);
 app.use("/api/events", eventsRouter);
 app.use("/api/events", agendaRouter);
 app.use("/api/events", speakersRouter);
+app.use("/api/events", checklistRouter);
 app.use("/api/ai", aiRouter);
 app.use("/api/public", publicRouter);
 app.use("/api/upload", uploadRouter);
+app.use("/api/user", userRouter);
 
 // Global Error Handler
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
