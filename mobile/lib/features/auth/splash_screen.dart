@@ -4,6 +4,7 @@ import '../../../core/services/auth_service.dart';
 import '../anchor/anchor_teleprompter_screen.dart';
 import '../organizer/screens/organizer_dashboard_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
+import '../attendee/attendee_screen.dart';
 import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -48,6 +49,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           destination = const AnchorTeleprompterScreen();
         } else if (role == 'admin') {
           destination = const AdminDashboardScreen();
+        } else if (role == 'attendee') {
+          destination = const AttendeeScreen();
         } else {
           destination = const OrganizerDashboardScreen();
         }

@@ -11,6 +11,7 @@ import '../anchor/anchor_teleprompter_screen.dart';
 import '../stage_display/stage_display_screen.dart';
 import '../organizer/screens/organizer_dashboard_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
+import '../attendee/attendee_screen.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
@@ -166,6 +167,17 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textSecondary,
                 ),
+              ),
+              const SizedBox(height: 14),
+
+              // Role 0: Attendee Companion App
+              _buildRoleCard(
+                icon: Icons.smartphone_rounded,
+                title: 'Attendee Companion App',
+                subtitle: 'Real-time stage timeline, speaker roster & live audience Q&A',
+                badgeText: 'ATTENDEE',
+                badgeColor: AppTheme.cyan,
+                onTap: () => _navigateTo(const AttendeeScreen()),
               ),
               const SizedBox(height: 14),
 

@@ -4,6 +4,7 @@ import '../../../core/services/auth_service.dart';
 import '../anchor/anchor_teleprompter_screen.dart';
 import '../organizer/screens/organizer_dashboard_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
+import '../attendee/attendee_screen.dart';
 import 'role_selection_screen.dart';
 import 'widgets/auth_text_field.dart';
 import 'widgets/auth_button.dart';
@@ -93,6 +94,21 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
           builder: (context) => const AdminDashboardScreen(),
+        ),
+        (route) => false,
+      );
+    } else if (lowerRole == 'attendee') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('📱 Welcome back! Opening Attendee Companion App...'),
+          backgroundColor: AppTheme.cyan,
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => const AttendeeScreen(),
         ),
         (route) => false,
       );

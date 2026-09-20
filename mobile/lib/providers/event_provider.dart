@@ -21,23 +21,28 @@ class EventProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   Timer? _tickerTimer;
+  Timer? _liveSyncTimer;
+  List<Map<String, dynamic>> _qnaQuestions = [];
 
   EventModel? get event => _event;
   List<EventModel> get organizerEvents => _organizerEvents;
   List<AgendaItemModel> get agenda => _agenda;
   List<SpeakerModel> get speakers => _speakers;
   List<NotificationModel> get notifications => _notifications;
+  List<Map<String, dynamic>> get qnaQuestions => _qnaQuestions;
   ScriptModel? get activeScript => _activeScript;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
   EventProvider() {
     _startTicker();
+    _startLiveSync();
   }
 
   @override
   void dispose() {
     _tickerTimer?.cancel();
+    _liveSyncTimer?.cancel();
     super.dispose();
   }
 
@@ -47,6 +52,53 @@ class EventProvider extends ChangeNotifier {
         notifyListeners();
       }
     });
+  }
+
+  void _startLiveSync() {
+    _liveSyncTimer = Timer.periodic(const Duration(seconds: 4), (_) async {
+      if (_event != null) {
+        await _performSilentLiveSync();
+      }
+    });
+  }
+
+  Future<void> _performSilentLiveSync() async {
+    try {
+      final updatedAgenda = await NeonDatabaseService().getAgendaForEvent(_event?.id);
+      if (updatedAgenda.isNotEmpty) {
+        _agenda = updatedAgenda.map((map) => AgendaItemModel.fromJson(map)).toList();
+      }
+      final updatedQna = await NeonDatabaseService().getQnaQuestions(_event?.id);
+      _qnaQuestions = updatedQna;
+      notifyListeners();
+    } catch (_) {}
+  }
+
+  Future<bool> submitQnaQuestion(String question, {String? authorName}) async {
+    final name = authorName?.trim().isNotEmpty == true ? authorName!.trim() : 'Attendee';
+    final targetEventId = _event?.id ?? 'default_event';
+    final currentSessionId = currentSession?.id;
+
+    final success = await NeonDatabaseService().saveQnaQuestion(
+      eventId: targetEventId,
+      authorName: name,
+      question: question,
+      sessionId: currentSessionId,
+    );
+
+    if (success) {
+      await fetchQnaQuestions();
+      return true;
+    }
+    return false;
+  }
+
+  Future<void> fetchQnaQuestions() async {
+    try {
+      final res = await NeonDatabaseService().getQnaQuestions(_event?.id);
+      _qnaQuestions = res;
+      notifyListeners();
+    } catch (_) {}
   }
 
   AgendaItemModel? get currentSession {

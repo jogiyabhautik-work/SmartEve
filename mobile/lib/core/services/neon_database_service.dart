@@ -1038,4 +1038,118 @@ class NeonDatabaseService {
       await connection?.close();
     }
   }
+
+  /// Ensure qna_questions table exists in Neon PostgreSQL
+  Future<void> _ensureQnaTable(Connection connection) async {
+    try {
+      const createSql = """
+        CREATE TABLE IF NOT EXISTS qna_questions (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          event_id UUID REFERENCES events(id) ON DELETE CASCADE,
+          session_id UUID,
+          author_name VARCHAR(255) DEFAULT 'Anonymous Attendee',
+          question TEXT NOT NULL,
+          upvotes INTEGER DEFAULT 0,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+      """;
+      await connection.execute(Sql.named(createSql));
+    } catch (e) {
+      debugPrint("⚠️ [Neon DB Direct] Error checking/updating qna_questions table: $e");
+    }
+  }
+
+  /// Submit a live Q&A question from an attendee into Neon PostgreSQL
+  Future<bool> saveQnaQuestion({
+    required String eventId,
+    required String authorName,
+    required String question,
+    String? sessionId,
+  }) async {
+    Connection? connection;
+    try {
+      connection = await _getConnection();
+      await _ensureQnaTable(connection);
+
+      String? targetEventUuid;
+      if (_isUuid(eventId)) {
+        targetEventUuid = eventId;
+      } else {
+        final res = await connection.execute(Sql.named("SELECT id FROM events ORDER BY created_at DESC LIMIT 1"));
+        if (res.isNotEmpty) targetEventUuid = res.first[0]?.toString();
+      }
+
+      if (targetEventUuid == null) return false;
+
+      final sql = """
+        INSERT INTO qna_questions (
+          event_id,
+          session_id,
+          author_name,
+          question,
+          created_at
+        ) VALUES (
+          CAST(@event_id AS uuid),
+          ${sessionId != null && _isUuid(sessionId) ? "CAST(@session_id AS uuid)" : "NULL"},
+          @author_name,
+          @question,
+          CURRENT_TIMESTAMP
+        );
+      """;
+
+      await connection.execute(
+        Sql.named(sql),
+        parameters: {
+          'event_id': targetEventUuid,
+          if (sessionId != null && _isUuid(sessionId)) 'session_id': sessionId,
+          'author_name': authorName,
+          'question': question,
+        },
+      );
+      debugPrint("🐘 [Neon DB Direct] Saved Q&A question: '$question'");
+      return true;
+    } catch (e) {
+      debugPrint("⚠️ [Neon DB Direct] Error saving Q&A question: $e");
+      return false;
+    } finally {
+      await connection?.close();
+    }
+  }
+
+  /// Fetch live Q&A questions for an event from Neon PostgreSQL
+  Future<List<Map<String, dynamic>>> getQnaQuestions(String? eventId) async {
+    Connection? connection;
+    final List<Map<String, dynamic>> questions = [];
+    try {
+      connection = await _getConnection();
+      await _ensureQnaTable(connection);
+
+      String sql = "SELECT id, author_name, question, upvotes, created_at FROM qna_questions ";
+      if (_isUuid(eventId)) {
+        sql += " WHERE event_id = CAST(@event_id AS uuid) ";
+      }
+      sql += " ORDER BY created_at DESC LIMIT 30; ";
+
+      final result = await connection.execute(
+        Sql.named(sql),
+        parameters: _isUuid(eventId) ? {'event_id': eventId} : {},
+      );
+
+      for (final row in result) {
+        questions.add({
+          'id': row[0]?.toString() ?? '',
+          'authorName': row[1]?.toString() ?? 'Attendee',
+          'question': row[2]?.toString() ?? '',
+          'upvotes': (row[3] as num?)?.toInt() ?? 0,
+          'createdAt': row[4]?.toString() ?? '',
+        });
+      }
+    } catch (e) {
+      debugPrint("⚠️ [Neon DB Direct] Error fetching Q&A questions: $e");
+    } finally {
+      await connection?.close();
+    }
+    return questions;
+  }
 }
+
