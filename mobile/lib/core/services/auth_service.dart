@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import '../network/api_client.dart';
 import '../theme/app_theme.dart';
@@ -761,6 +760,7 @@ class AuthService {
 
   Future<void> saveSession(AppUser user) async {
     _currentAppUser = user;
+    await _persistSession(user);
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('is_logged_in', true);
@@ -775,35 +775,6 @@ class AuthService {
     } catch (e) {
       debugPrint("⚠️ Could not save session: $e");
     }
-  }
-
-  Future<AppUser?> restoreSession() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
-      if (!isLoggedIn) return null;
-
-      final uid = prefs.getString('user_uid');
-      final email = prefs.getString('user_email');
-      final fullName = prefs.getString('user_fullname');
-      final role = prefs.getString('user_role');
-      final neonId = prefs.getString('user_neon_id');
-
-      if (uid != null && email != null && role != null) {
-        _currentAppUser = AppUser(
-          uid: uid,
-          email: email,
-          fullName: fullName ?? email.split('@').first,
-          role: role,
-          neonId: neonId,
-        );
-        debugPrint("⚡ Restored active user session: $email ($role)");
-        return _currentAppUser;
-      }
-    } catch (e) {
-      debugPrint("⚠️ Could not restore session: $e");
-    }
-    return null;
   }
 
   /// Sign out
